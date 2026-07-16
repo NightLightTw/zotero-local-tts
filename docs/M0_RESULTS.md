@@ -16,9 +16,15 @@ Runtime: Python 3.12.10, MLX-Audio 0.4.5
 - Five-run warm mean generated-audio duration: approximately 20 seconds
 - Five-run warm mean RTF: 0.470
 - Five-run warm mean time to first non-streaming result: 9.43 seconds
+- User listening review: accepted on 2026-07-17
 
 An RTF of 0.470 means the model generates audio at roughly 2.1 times playback
 speed on this machine. Memory use is comfortably inside the project target.
+
+The generated `Aiden` WAV sample was reviewed by the target user and judged
+suitable for continued Zotero integration work. This model and voice are now
+the project defaults; further voice comparison is optional rather than an MVP
+blocker.
 
 The non-streaming first-result latency does not meet the one-second target. This
 metric represents a complete generated segment, not true time-to-first-sample.

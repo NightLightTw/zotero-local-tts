@@ -264,7 +264,8 @@ The MVP is complete when:
 
 ## 13. Open decisions
 
-- Which Qwen voice provides the clearest long-form academic English.
+- Whether another Qwen voice materially improves on the accepted `Aiden`
+  baseline during long-form listening; this is not an MVP blocker.
 - Whether the official Zotero reader exposes enough stable extension hooks for
   full read-position synchronization without patching Zotero itself.
 - Whether WAV plus native prefetch meets the latency target; true PCM streaming
