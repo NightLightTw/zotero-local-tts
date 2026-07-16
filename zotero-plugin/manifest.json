@@ -1,0 +1,15 @@
+{
+  "manifest_version": 2,
+  "name": "Zotero Local TTS",
+  "version": "0.1.2",
+  "description": "Use a local Qwen3-TTS voice with Zotero Read Aloud.",
+  "author": "Zotero Local TTS contributors",
+  "applications": {
+    "zotero": {
+      "id": "zotero-local-tts@zhangzizhong.local",
+      "update_url": "https://github.com/zhangzizhong/zotero-local-tts/releases/latest/download/updates.json",
+      "strict_min_version": "9.0",
+      "strict_max_version": "9.0.*"
+    }
+  }
+}

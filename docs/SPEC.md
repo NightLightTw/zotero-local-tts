@@ -1,6 +1,6 @@
 # Zotero Local TTS — Product and Technical Specification
 
-Status: Draft v0.1  
+Status: Draft v0.2
 Last updated: 2026-07-17
 
 ## 1. Objective
@@ -49,8 +49,7 @@ must have separate cache identities and lifecycle policies.
 1. Start a local MLX-Audio service and load Qwen3-TTS.
 2. Put a restricted local bridge in front of MLX-Audio and expose health,
    voice-listing, and speech-generation endpoints on loopback.
-3. Complete a Zotero integration spike comparing native Read Aloud provider
-   injection with a standalone extension player.
+3. Use the validated native Read Aloud provider injection path.
 4. Generate English speech from selected or current text in Zotero.
 5. Preserve native play, pause, stop, resume, prefetch, highlighting, and saved
    position behavior when the native integration path is selected.
@@ -237,14 +236,14 @@ The MVP is complete when:
 - Add model lifecycle, validation, caching, and health reporting.
 - Add automated API tests.
 
-### M1.5 — Zotero native integration spike
+### M1.5 — Zotero native integration spike (complete)
 
 - Inspect Zotero 9.0.6 native Read Aloud provider injection behavior.
 - Prototype local implementations of voice listing and audio retrieval.
 - Compare private native-provider injection against a standalone player.
 - Record the chosen path and upgrade risk in an architecture decision record.
 
-### M2 — Zotero integration prototype
+### M2 — Zotero integration prototype (in progress)
 
 - Read selected text.
 - Implement playback controls and a two-chunk queue.
@@ -266,7 +265,7 @@ The MVP is complete when:
 
 - Whether another Qwen voice materially improves on the accepted `Aiden`
   baseline during long-form listening; this is not an MVP blocker.
-- Whether the official Zotero reader exposes enough stable extension hooks for
-  full read-position synchronization without patching Zotero itself.
+- How to surface the provider as local in a future Zotero version; Zotero 9.0.6
+  requires remote local providers to use the `Standard` UI tier.
 - Whether WAV plus native prefetch meets the latency target; true PCM streaming
   is a separate architecture only if that test fails.

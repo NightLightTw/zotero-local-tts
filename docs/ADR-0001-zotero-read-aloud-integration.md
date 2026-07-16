@@ -1,6 +1,6 @@
 # ADR-0001: Reuse Zotero's native Read Aloud controller
 
-Status: Proposed, pending executable spike  
+Status: Accepted
 Date: 2026-07-17
 
 ## Context
@@ -9,11 +9,10 @@ Zotero 9.0.6 already implements document segmentation, audio prefetch, persisten
 audio caching, play/pause/stop behavior, paragraph navigation, spoken-text
 highlighting, and saved reading position.
 
-Inspection of the installed Zotero 9.0.6 application found a private reader
-method named `_getReadAloudRemoteInterface(targetWindow)`. It returns an object
-with `getVoices`, `getAudio`, `getCreditsRemaining`, and `resetCredits`. The
-native implementation obtains remote voice metadata and audio, then caches
-audio using a key derived from voice ID and segment text.
+Inspection of the installed Zotero 9.0.6 application found that the private
+reader interface dynamically calls `Zotero.Sync.APIClient.prototype` methods
+`getReadAloudVoices()` and `getReadAloudAudio()`. The native implementation then
+caches audio using a key derived from voice ID and segment text.
 
 Zotero's documented extension surface does not currently expose a public TTS
 provider-registration API. Depending on the private method therefore carries an
@@ -22,23 +21,29 @@ large amount of user-facing behavior.
 
 ## Proposed decision
 
-Prefer a Zotero extension that overrides or injects the private remote
-interface and sends voice/audio requests to the authenticated local bridge.
-Keep the override small, version-gated, and reversible.
+Use a Zotero extension that temporarily replaces only those two APIClient
+prototype methods and sends audio requests to the authenticated local bridge.
+This is smaller than replacing `_getReadAloudRemoteInterface()` itself. Save the
+original functions and restore them when the extension shuts down, but only if
+the installed functions are still ours.
+
+Zotero 9.0.6 accepts `local` in a remote voice response but excludes remote
+`local` voices from the UI; that tier is populated exclusively from browser/OS
+speech synthesis. The local Qwen voice is therefore declared in the `standard`
+tier and labelled `Aiden (Qwen3-TTS, Local)`. It uses zero credits and never
+contacts Zotero's TTS endpoint.
 
 The extension must fail closed: if the expected method or return contract is
 missing, it must disable the local provider and show a compatibility error. It
 must not alter or replace the Zotero application bundle.
 
-## Spike exit criteria
+## Spike result
 
-1. A development extension can expose one local voice in the native voice UI.
-2. Native Read Aloud can request and play a locally returned WAV Blob.
-3. Native pause/resume, prefetch, cache, highlight, and saved position continue
-   to work.
-4. Uninstalling or disabling the extension restores the original method.
-5. The override detects Zotero 9.0.6 explicitly and contains a contract test
-   that will fail clearly on incompatible later releases.
+The spike passed on Zotero 9.0.6. The extension exposed Aiden, returned complete
+WAV Blobs, entered native playback, and triggered Zotero's two-ahead prefetch.
+Play/pause and the native Reader UI remained active. The implementation is
+version-gated to Zotero 9.0.x, contains a runtime contract check, and restores
+the original methods on disable, uninstall, or upgrade.
 
 ## Fallback
 
@@ -49,8 +54,9 @@ prefetch, cancellation, and persistent caching.
 
 ## Consequences
 
-- Far less playback and reader-state code if the spike succeeds.
+- Far less playback and reader-state code than a standalone player.
 - A small compatibility adapter will be required for each incompatible Zotero
   change until an official provider API exists.
 - The local bridge should return complete WAV files for native Web Audio
   decoding. Raw PCM streaming remains out of scope for this path.
+- The UI category says `Standard` even though the provider is entirely local.
