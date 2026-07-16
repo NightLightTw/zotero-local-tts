@@ -1,0 +1,9 @@
+Large language models are increasingly used to support scientific discovery, but their
+apparent fluency can obscure important limitations. In particular, benchmark performance
+does not guarantee that a model will remain reliable when the distribution of inputs changes.
+Researchers should therefore report uncertainty, examine failure cases, and distinguish
+between evidence produced by an experiment and conclusions inferred from that evidence.
+
+For example, an improvement from 82.4 percent to 83.1 percent may be statistically detectable
+without being practically meaningful. The interpretation depends on sample size, measurement
+error, the cost of mistakes, and whether the evaluation data represent the intended population.
