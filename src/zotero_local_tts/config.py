@@ -9,6 +9,32 @@ from pathlib import Path
 
 DEFAULT_DATA_DIR = Path.home() / "Library" / "Application Support" / "Zotero Local TTS"
 
+VOICE_LOCALES = {
+    "Aiden": "en-US",
+    "Ryan": "en-US",
+    "Vivian": "zh-CN",
+    "Serena": "zh-CN",
+    "Uncle_Fu": "zh-CN",
+    "Dylan": "zh-CN",
+    "Eric": "zh-CN",
+    "Ono_Anna": "ja-JP",
+    "Sohee": "ko-KR",
+}
+
+VOICE_LANGUAGES = {
+    "Aiden": "english",
+    "Ryan": "english",
+    "Vivian": "chinese",
+    "Serena": "chinese",
+    "Uncle_Fu": "chinese",
+    "Dylan": "chinese",
+    "Eric": "chinese",
+    "Ono_Anna": "japanese",
+    "Sohee": "korean",
+}
+
+DEFAULT_VOICES = tuple(VOICE_LOCALES)
+
 
 @dataclass(frozen=True)
 class Settings:
@@ -19,7 +45,7 @@ class Settings:
     max_concurrency: int = 1
     model_alias: str = "qwen3-customvoice-1.7b-8bit"
     model_id: str = "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit"
-    voices: tuple[str, ...] = ("Aiden", "Ryan")
+    voices: tuple[str, ...] = DEFAULT_VOICES
     allowed_origins: tuple[str, ...] = ()
     allowed_hosts: tuple[str, ...] = ("127.0.0.1", "localhost", "::1")
 

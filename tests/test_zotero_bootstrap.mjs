@@ -66,6 +66,18 @@ await vm.runInContext("startup()", context);
 const client = new APIClient();
 const response = await client.getReadAloudVoices();
 assert.equal(response.voices.standard.length, 2);
+const localConfiguration = response.voices.standard[0];
+assert.equal(Object.keys(localConfiguration.voices).length, 9);
+assert.deepEqual(Array.from(localConfiguration.locales["en-US"].default), [
+  "zotero-local-qwen-aiden",
+]);
+assert.deepEqual(Array.from(localConfiguration.locales["en-US"].other), [
+  "zotero-local-qwen-ryan",
+]);
+assert.equal(localConfiguration.locales["zh-CN"].default.length, 1);
+assert.equal(localConfiguration.locales["zh-CN"].other.length, 4);
+assert.equal(localConfiguration.locales["ja-JP"].default.length, 1);
+assert.equal(localConfiguration.locales["ko-KR"].default.length, 1);
 assert.equal(
   response.voices.standard[0].voices["zotero-local-qwen-aiden"].label,
   "Aiden (Qwen3-TTS, Local)"
@@ -94,6 +106,24 @@ assert.deepEqual(JSON.parse(localRequests[0][2].body), {
   response_format: "wav",
   speed: 1.0,
 });
+
+const nativeVoices = {
+  "zotero-local-qwen-ryan": "Ryan",
+  "zotero-local-qwen-vivian": "Vivian",
+  "zotero-local-qwen-serena": "Serena",
+  "zotero-local-qwen-uncle-fu": "Uncle_Fu",
+  "zotero-local-qwen-dylan": "Dylan",
+  "zotero-local-qwen-eric": "Eric",
+  "zotero-local-qwen-ono-anna": "Ono_Anna",
+  "zotero-local-qwen-sohee": "Sohee",
+};
+for (const [voiceID, engineVoice] of Object.entries(nativeVoices)) {
+  const result = await client.getReadAloudAudio({ text: "Native text." }, voiceID);
+  assert.equal(result.audio, "local-audio");
+  const payload = JSON.parse(localRequests.at(-1)[2].body);
+  assert.equal(payload.voice, engineVoice);
+}
+assert.equal(localRequests.length, 9);
 
 for (const mode of ["throw", "error"]) {
   voiceResponseMode = mode;

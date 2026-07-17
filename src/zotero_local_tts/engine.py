@@ -10,6 +10,8 @@ import numpy as np
 import soundfile as sf
 from mlx_audio.tts.utils import load_model
 
+from .config import VOICE_LANGUAGES
+
 
 class TTSEngine(Protocol):
     def synthesize(self, text: str, model_id: str, voice: str, speed: float) -> bytes:
@@ -49,13 +51,16 @@ class MLXAudioEngine:
 
     def synthesize(self, text: str, model_id: str, voice: str, speed: float) -> bytes:
         model = self._load(model_id)
+        language = VOICE_LANGUAGES.get(voice)
+        if language is None:
+            raise RuntimeError("The requested voice has no configured native language")
         chunks: list[np.ndarray] = []
         sample_rate = int(getattr(model, "sample_rate", 24_000))
         try:
             for result in model.generate(
                 text=text,
                 voice=voice,
-                lang_code="english",
+                lang_code=language,
                 speed=speed,
             ):
                 audio = np.asarray(result.audio, dtype=np.float32).squeeze()

@@ -10,7 +10,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
-from .config import Settings, default_settings
+from .config import VOICE_LOCALES, Settings, default_settings
 from .engine import TTSEngine, UnconfiguredEngine
 
 
@@ -58,7 +58,7 @@ def create_app(
                 {
                     "id": voice,
                     "name": voice,
-                    "language": "en",
+                    "language": VOICE_LOCALES.get(voice, "und"),
                     "model": settings.model_alias,
                 }
                 for voice in settings.voices

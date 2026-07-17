@@ -6,10 +6,53 @@ const PLUGIN_NAME = "Zotero Local TTS";
 const SUPPORTED_VERSION = /^9\.0\./;
 const BRIDGE_URL = "http://127.0.0.1:8766";
 const MODEL = "qwen3-customvoice-1.7b-8bit";
-const VOICE_ID = "zotero-local-qwen-aiden";
-const ENGINE_VOICE = "Aiden";
-const SAMPLE_TEXT =
-  "This is Aiden, reading locally with Qwen three text to speech.";
+const LOCAL_VOICES = {
+  "zotero-local-qwen-aiden": {
+    engineVoice: "Aiden",
+    label: "Aiden (Qwen3-TTS, Local)",
+    sample: "This is Aiden, reading locally with Qwen three text to speech.",
+  },
+  "zotero-local-qwen-ryan": {
+    engineVoice: "Ryan",
+    label: "Ryan (Qwen3-TTS, Local)",
+    sample: "This is Ryan, reading locally with Qwen three text to speech.",
+  },
+  "zotero-local-qwen-vivian": {
+    engineVoice: "Vivian",
+    label: "Vivian (Qwen3-TTS, Local)",
+    sample: "这是 Vivian，正在使用 Qwen 三文字转语音进行本地朗读。",
+  },
+  "zotero-local-qwen-serena": {
+    engineVoice: "Serena",
+    label: "Serena (Qwen3-TTS, Local)",
+    sample: "这是 Serena，正在使用 Qwen 三文字转语音进行本地朗读。",
+  },
+  "zotero-local-qwen-uncle-fu": {
+    engineVoice: "Uncle_Fu",
+    label: "Uncle Fu (Qwen3-TTS, Local)",
+    sample: "这是 Uncle Fu，正在使用 Qwen 三文字转语音进行本地朗读。",
+  },
+  "zotero-local-qwen-dylan": {
+    engineVoice: "Dylan",
+    label: "Dylan (Qwen3-TTS, Local)",
+    sample: "这是 Dylan，正在使用 Qwen 三文字转语音进行本地朗读。",
+  },
+  "zotero-local-qwen-eric": {
+    engineVoice: "Eric",
+    label: "Eric (Qwen3-TTS, Local)",
+    sample: "这是 Eric，正在使用 Qwen 三文字转语音进行本地朗读。",
+  },
+  "zotero-local-qwen-ono-anna": {
+    engineVoice: "Ono_Anna",
+    label: "Ono Anna (Qwen3-TTS, Local)",
+    sample: "小野アンナです。Qwen三の音声合成でローカルに読み上げています。",
+  },
+  "zotero-local-qwen-sohee": {
+    engineVoice: "Sohee",
+    label: "Sohee (Qwen3-TTS, Local)",
+    sample: "소희입니다. Qwen 삼 음성 합성으로 로컬에서 읽고 있습니다.",
+  },
+};
 
 let originalGetReadAloudVoices;
 let originalGetReadAloudAudio;
@@ -40,6 +83,9 @@ async function readToken() {
 }
 
 function localVoiceResponse() {
+  const voiceLabels = Object.fromEntries(
+    Object.entries(LOCAL_VOICES).map(([id, voice]) => [id, { label: voice.label }])
+  );
   return {
     voices: {
       standard: [
@@ -49,15 +95,28 @@ function localVoiceResponse() {
           sentenceDelay: 0,
           locales: {
             "en-US": {
-              default: [VOICE_ID],
+              default: ["zotero-local-qwen-aiden"],
+              other: ["zotero-local-qwen-ryan"],
+            },
+            "zh-CN": {
+              default: ["zotero-local-qwen-vivian"],
+              other: [
+                "zotero-local-qwen-serena",
+                "zotero-local-qwen-uncle-fu",
+                "zotero-local-qwen-dylan",
+                "zotero-local-qwen-eric",
+              ],
+            },
+            "ja-JP": {
+              default: ["zotero-local-qwen-ono-anna"],
+              other: [],
+            },
+            "ko-KR": {
+              default: ["zotero-local-qwen-sohee"],
               other: [],
             },
           },
-          voices: {
-            [VOICE_ID]: {
-              label: "Aiden (Qwen3-TTS, Local)",
-            },
-          },
+          voices: voiceLabels,
         },
       ],
     },
@@ -91,11 +150,14 @@ async function mergedVoiceResponse(apiClient) {
 }
 
 async function requestAudio(segment, voiceID) {
-  if (voiceID !== VOICE_ID) {
+  const localVoice = Object.prototype.hasOwnProperty.call(LOCAL_VOICES, voiceID)
+    ? LOCAL_VOICES[voiceID]
+    : null;
+  if (!localVoice) {
     return originalGetReadAloudAudio.call(this, segment, voiceID);
   }
 
-  const input = segment === "sample" ? SAMPLE_TEXT : segment?.text;
+  const input = segment === "sample" ? localVoice.sample : segment?.text;
   if (!input || typeof input !== "string") {
     return { error: "unknown" };
   }
@@ -112,7 +174,7 @@ async function requestAudio(segment, voiceID) {
         },
         body: JSON.stringify({
           model: MODEL,
-          voice: ENGINE_VOICE,
+          voice: localVoice.engineVoice,
           input,
           response_format: "wav",
           speed: 1.0,

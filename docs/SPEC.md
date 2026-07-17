@@ -33,8 +33,9 @@ which keeps the Zotero integration independent from a particular model. The
 same extension should later be able to use another local backend without
 rewriting document navigation or playback logic.
 
-Qwen3-TTS CustomVoice 1.7B is the default for fixed high-quality voices. With
-24 GB unified memory, it should fit comfortably alongside Zotero and the local
+Qwen3-TTS CustomVoice 1.7B is the default for nine fixed high-quality voices.
+Each speaker is exposed only under its native-language locale. With 24 GB
+unified memory, it should fit comfortably alongside Zotero and the local
 service. The 0.6B model remains available when lower time-to-first-audio is more
 important than maximum voice quality.
 
@@ -263,8 +264,8 @@ The MVP is complete when:
 
 ## 13. Open decisions
 
-- Whether another Qwen voice materially improves on the accepted `Aiden`
-  baseline during long-form listening; this is not an MVP blocker.
+- Whether `Ryan` materially improves on the accepted `Aiden` baseline during
+  long-form English listening; this is not an MVP blocker.
 - How to surface the provider as local in a future Zotero version; Zotero 9.0.6
   requires remote local providers to use the `Standard` UI tier.
 - Whether WAV plus native prefetch meets the latency target; true PCM streaming

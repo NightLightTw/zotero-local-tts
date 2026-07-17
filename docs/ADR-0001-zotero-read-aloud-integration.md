@@ -29,12 +29,13 @@ the installed functions are still ours.
 
 Zotero 9.0.6 accepts `local` in a remote voice response but excludes remote
 `local` voices from the UI; that tier is populated exclusively from browser/OS
-speech synthesis. The local Qwen voice is therefore declared in the `standard`
-tier and labelled `Aiden (Qwen3-TTS, Local)`. It uses zero credits and never
-contacts Zotero's TTS endpoint. The extension merges this configuration into
+speech synthesis. The local Qwen voices are therefore declared in the
+`standard` tier and labelled as local. They use zero credits and never contact
+Zotero's TTS endpoint. Each of the nine built-in speakers is registered only
+for its native-language locale. The extension merges this configuration into
 Zotero's original response rather than replacing it, preserving the built-in
 Standard and Premium voices. If the original voice listing is unavailable, the
-local Aiden configuration remains usable as a fallback.
+local voice configuration remains usable as a fallback.
 
 The extension must fail closed: if the expected method or return contract is
 missing, it must disable the local provider and show a compatibility error. It

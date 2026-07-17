@@ -9,8 +9,8 @@ Silicon.
 
 Zotero Local TTS connects Zotero's native PDF Read Aloud controls to a local
 Qwen3-TTS model. Zotero still handles sentence navigation, highlighting,
-play/pause, playback speed, caching, and prefetch. When Aiden is selected, the
-paper text and generated audio stay on your Mac.
+play/pause, playback speed, caching, and prefetch. When a Qwen3-TTS local voice
+is selected, the paper text and generated audio stay on your Mac.
 
 > [!IMPORTANT]
 > This is an early, tested prototype for Zotero 9.0.x on Apple Silicon. It uses
@@ -82,7 +82,7 @@ enabled, so it will fail closed rather than downloading a model unexpectedly.
 ```
 
 The command prints the path to an XPI such as
-`dist/zotero-local-tts-0.1.3.xpi`.
+`dist/zotero-local-tts-0.1.4.xpi`.
 
 ### 4. Install the plugin
 
@@ -109,19 +109,22 @@ a random bearer token at:
 
 The directory is restricted to mode `0700` and the token to `0600`.
 
-### 6. Select Aiden in Zotero
+### 6. Select a local voice in Zotero
 
 Open a PDF, start Read Aloud, then choose:
 
 - **Voice Mode:** Standard
-- **Language:** English
-- **Voice:** Aiden (Qwen3-TTS, Local)
+- **Language:** choose English, Chinese, Japanese, or Korean
+- **Voice:** choose one of the Qwen3-TTS voices listed for that language
 
 Zotero 9.0.6 reserves its `Local` mode for browser/operating-system voices and
 discards remote-provider voices marked `local`. The plugin therefore appears
 under `Standard`, but it uses zero Zotero credits and sends synthesis requests
-only to `127.0.0.1`. Zotero's existing Standard and Premium voices remain
-available; selecting one of them uses Zotero's original cloud behavior.
+only to `127.0.0.1`. The nine built-in speakers are restricted to their native
+language menus: Aiden/Ryan for English; Vivian/Serena/Uncle Fu/Dylan/Eric for
+Chinese; Ono Anna for Japanese; and Sohee for Korean. Zotero's existing
+Standard and Premium voices remain available; selecting one of them uses
+Zotero's original cloud behavior.
 
 ## How it works
 
@@ -155,16 +158,16 @@ The application bundle and Zotero database are not modified.
 | Authentication | Per-install random bearer token |
 | Browser requests | Origins rejected by default |
 | Model loading | Allowlisted model and offline-only normal operation |
-| Voice selection | Allowlisted voices only; default is Aiden |
+| Voice selection | Nine allowlisted speakers, restricted to native-language menus |
 | Input size | Maximum 2,000 characters per request |
 | Logs | Paper text and bearer tokens are not logged |
 | Audio | Returned to Zotero as WAV; not committed to this repository |
 
 Zotero may independently fetch its original voice metadata and check the
 plugin's GitHub update URL. Paper text is not included in those requests. If you
-select a Zotero cloud voice instead of Aiden, Zotero's normal cloud TTS privacy
-behavior applies. Do not clone or distribute another person's voice without
-permission.
+select a Zotero cloud voice instead of a Qwen3-TTS local voice, Zotero's normal
+cloud TTS privacy behavior applies. Do not clone or distribute another person's
+voice without permission.
 
 The update URL becomes functional when a tagged GitHub Release publishes its
 XPI and `updates.json`; source installations do not depend on it.
@@ -189,19 +192,20 @@ paper listening and sentence-gap tuning remain ongoing work.
 
 - The plugin is version-gated to Zotero 9.0.x and tested on 9.0.6.
 - It uses private Zotero APIs that may change without notice.
-- English academic papers and the fixed Aiden voice are the current focus.
+- English academic papers remain the primary validated listening workflow; all
+  nine built-in voices are available in their native-language menus.
 - The bridge must be started manually after login.
 - Zotero does not expose an extension point for third-party voices in its true
-  `Local` tier, so Aiden must appear in `Standard` on Zotero 9.0.x.
+  `Local` tier, so Qwen3-TTS voices must appear in `Standard` on Zotero 9.0.x.
 - Failure messages are currently generic; inspect the bridge terminal first.
 - Voice cloning, streaming, academic-text cleanup, automatic startup, and cache
   management are planned rather than complete.
 
 ## Troubleshooting
 
-### Aiden does not appear
+### Local voices do not appear
 
-- Confirm **Zotero Local TTS 0.1.3** is enabled under **Tools → Plugins**.
+- Confirm **Zotero Local TTS 0.1.4** is enabled under **Tools → Plugins**.
 - Restart Zotero after installing or updating the XPI; an already-open Reader
   can retain its previous voice list.
 - Choose **Voice Mode: Standard**, not Local.

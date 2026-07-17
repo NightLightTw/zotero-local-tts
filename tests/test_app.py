@@ -8,7 +8,12 @@ import wave
 from fastapi.testclient import TestClient
 
 from zotero_local_tts.app import create_app
-from zotero_local_tts.config import Settings
+from zotero_local_tts.config import (
+    DEFAULT_VOICES,
+    VOICE_LANGUAGES,
+    VOICE_LOCALES,
+    Settings,
+)
 
 TOKEN = "test-token"
 
@@ -69,6 +74,19 @@ def test_lists_only_allowlisted_voices() -> None:
     response = client().get("/v1/voices", headers=auth_headers())
     assert response.status_code == 200
     assert [voice["id"] for voice in response.json()["voices"]] == ["Aiden"]
+
+
+def test_default_voice_catalog_contains_all_native_locales() -> None:
+    settings = Settings(token=TOKEN, allowed_hosts=("testserver",))
+    response = TestClient(create_app(FakeEngine(), settings)).get(
+        "/v1/voices", headers=auth_headers()
+    )
+
+    assert response.status_code == 200
+    voices = response.json()["voices"]
+    assert [voice["id"] for voice in voices] == list(DEFAULT_VOICES)
+    assert {voice["id"]: voice["language"] for voice in voices} == VOICE_LOCALES
+    assert set(VOICE_LANGUAGES) == set(VOICE_LOCALES)
 
 
 def test_returns_wav_audio() -> None:

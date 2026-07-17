@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Zotero Local TTS",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Use a local Qwen3-TTS voice with Zotero Read Aloud.",
   "author": "Zotero Local TTS contributors",
   "applications": {
