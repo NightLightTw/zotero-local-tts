@@ -3,8 +3,10 @@
 This file is an initial inventory, not legal advice. Pin exact revisions before
 shipping an installer or extension release.
 
+Project-owned source code and documentation are licensed under Apache-2.0.
+
 | Component | Purpose | License | Distribution policy |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | MLX-Audio | Apple Silicon TTS runtime and API foundation | MIT | Installed dependency; preserve notices |
 | Qwen3-TTS MLX weights | Offline TTS model | Apache-2.0 | Download separately; do not bundle in `.xpi` |
 | Zotero | Host application and reader integration reference | AGPL-3.0 | Do not redistribute a modified app for the MVP |

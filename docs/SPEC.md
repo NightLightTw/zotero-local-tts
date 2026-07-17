@@ -33,10 +33,10 @@ which keeps the Zotero integration independent from a particular model. The
 same extension should later be able to use another local backend without
 rewriting document navigation or playback logic.
 
-Qwen3-TTS CustomVoice 1.7B is the default for fixed high-quality voices. With 24 GB unified memory, it should
-fit comfortably alongside Zotero and the local service. The 0.6B model remains
-available when lower time-to-first-audio is more important than maximum voice
-quality.
+Qwen3-TTS CustomVoice 1.7B is the default for fixed high-quality voices. With
+24 GB unified memory, it should fit comfortably alongside Zotero and the local
+service. The 0.6B model remains available when lower time-to-first-audio is more
+important than maximum voice quality.
 
 Zero-shot voice cloning is a later, separate mode using a Qwen3-TTS Base model.
 CustomVoice, Base, and VoiceDesign are not interchangeable model variants and

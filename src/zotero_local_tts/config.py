@@ -28,18 +28,27 @@ def load_or_create_token(path: Path | None = None) -> str:
     """Return a persistent per-install token stored with user-only permissions."""
     token_path = path or DEFAULT_DATA_DIR / "token"
     token_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    token_path.parent.chmod(0o700)
+    no_follow = getattr(os, "O_NOFOLLOW", 0)
     try:
-        token = token_path.read_text(encoding="utf-8").strip()
+        descriptor = os.open(token_path, os.O_RDONLY | no_follow)
+        os.fchmod(descriptor, 0o600)
+        with os.fdopen(descriptor, encoding="utf-8") as token_file:
+            token = token_file.read().strip()
         if token:
             return token
     except FileNotFoundError:
         pass
 
     token = secrets.token_urlsafe(32)
-    descriptor = os.open(token_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    descriptor = os.open(
+        token_path,
+        os.O_WRONLY | os.O_CREAT | os.O_TRUNC | no_follow,
+        0o600,
+    )
+    os.fchmod(descriptor, 0o600)
     with os.fdopen(descriptor, "w", encoding="utf-8") as token_file:
         token_file.write(token + "\n")
-    token_path.chmod(0o600)
     return token
 
 

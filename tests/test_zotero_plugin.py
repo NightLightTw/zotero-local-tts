@@ -36,3 +36,10 @@ def test_built_xpi_has_files_at_archive_root(tmp_path: Path) -> None:
 
     with zipfile.ZipFile(archive) as xpi:
         assert set(xpi.namelist()) == {"manifest.json", "bootstrap.js"}
+
+
+def test_build_script_derives_archive_version_from_manifest() -> None:
+    script = (PROJECT_ROOT / "scripts" / "build-xpi.sh").read_text()
+
+    assert "plutil -extract version" in script
+    assert "zotero-local-tts-0.1.2.xpi" not in script

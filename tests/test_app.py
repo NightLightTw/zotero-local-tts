@@ -49,6 +49,14 @@ def test_requires_bearer_token() -> None:
     assert response.status_code == 401
 
 
+def test_rejects_unlisted_host_even_with_valid_token() -> None:
+    response = client().get(
+        "/health",
+        headers={**auth_headers(), "Host": "attacker.example"},
+    )
+    assert response.status_code == 400
+
+
 def test_rejects_browser_origin_by_default() -> None:
     response = client().get(
         "/health",
