@@ -11,8 +11,8 @@ and `uv`:
 git clone https://github.com/NightLightTw/zotero-local-tts.git
 cd zotero-local-tts
 uv sync --no-editable
-uv run pytest -q
-uv run ruff check .
+uv run --no-sync pytest -q
+uv run --no-sync ruff check .
 node --check zotero-plugin/bootstrap.js
 ./scripts/build-xpi.sh
 ```
@@ -22,7 +22,7 @@ local Hugging Face cache:
 
 ```bash
 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 RUN_MLX_INTEGRATION=1 \
-  uv run pytest -q tests/test_integration_mlx.py
+  uv run --no-sync pytest -q tests/test_integration_mlx.py
 ```
 
 ## Pull requests

@@ -9,8 +9,8 @@ Silicon.
 
 Zotero Local TTS connects Zotero's native PDF Read Aloud controls to a local
 Qwen3-TTS model. Zotero still handles sentence navigation, highlighting,
-play/pause, playback speed, caching, and prefetch. The paper text and generated
-audio stay on your Mac.
+play/pause, playback speed, caching, and prefetch. When Aiden is selected, the
+paper text and generated audio stay on your Mac.
 
 > [!IMPORTANT]
 > This is an early, tested prototype for Zotero 9.0.x on Apple Silicon. It uses
@@ -43,6 +43,7 @@ audio stay on your Mac.
 - An Apple Silicon Mac. The validated machine is an M5 with 24 GB memory.
 - macOS and Zotero 9.0.x. The validated Zotero version is 9.0.6.
 - Python 3.12 and [uv](https://docs.astral.sh/uv/).
+- Node.js 20 or newer for the plugin runtime-contract test.
 - About 3.1 GB of free space for the default model, plus the Python environment.
 - Internet access only for the initial dependency and model downloads.
 
@@ -66,7 +67,7 @@ editable-install `.pth` files.
 ### 2. Download the model once
 
 ```bash
-uv run hf download \
+uv run --no-sync hf download \
   mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit \
   --revision 41d3337e8b7f2843a75841595fc14e4b9a7a4b96
 ```
@@ -81,7 +82,7 @@ enabled, so it will fail closed rather than downloading a model unexpectedly.
 ```
 
 The command prints the path to an XPI such as
-`dist/zotero-local-tts-0.1.2.xpi`.
+`dist/zotero-local-tts-0.1.3.xpi`.
 
 ### 4. Install the plugin
 
@@ -96,7 +97,7 @@ In Zotero:
 ### 5. Start the local bridge
 
 ```bash
-HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 uv run zotero-local-tts
+HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 uv run --no-sync zotero-local-tts
 ```
 
 Keep this terminal open while listening. On its first start, the bridge creates
@@ -119,7 +120,8 @@ Open a PDF, start Read Aloud, then choose:
 Zotero 9.0.6 reserves its `Local` mode for browser/operating-system voices and
 discards remote-provider voices marked `local`. The plugin therefore appears
 under `Standard`, but it uses zero Zotero credits and sends synthesis requests
-only to `127.0.0.1`.
+only to `127.0.0.1`. Zotero's existing Standard and Premium voices remain
+available; selecting one of them uses Zotero's original cloud behavior.
 
 ## How it works
 
@@ -158,9 +160,14 @@ The application bundle and Zotero database are not modified.
 | Logs | Paper text and bearer tokens are not logged |
 | Audio | Returned to Zotero as WAV; not committed to this repository |
 
-Zotero may independently check the plugin's GitHub update URL. Paper text is not
-included in that request. Do not clone or distribute another person's voice
-without permission.
+Zotero may independently fetch its original voice metadata and check the
+plugin's GitHub update URL. Paper text is not included in those requests. If you
+select a Zotero cloud voice instead of Aiden, Zotero's normal cloud TTS privacy
+behavior applies. Do not clone or distribute another person's voice without
+permission.
+
+The update URL becomes functional when a tagged GitHub Release publishes its
+XPI and `updates.json`; source installations do not depend on it.
 
 ## Performance on the validated Mac
 
@@ -184,8 +191,8 @@ paper listening and sentence-gap tuning remain ongoing work.
 - It uses private Zotero APIs that may change without notice.
 - English academic papers and the fixed Aiden voice are the current focus.
 - The bridge must be started manually after login.
-- The plugin replaces Zotero's remote voice list while enabled, so Zotero's
-  cloud Standard/Premium voices are temporarily hidden.
+- Zotero does not expose an extension point for third-party voices in its true
+  `Local` tier, so Aiden must appear in `Standard` on Zotero 9.0.x.
 - Failure messages are currently generic; inspect the bridge terminal first.
 - Voice cloning, streaming, academic-text cleanup, automatic startup, and cache
   management are planned rather than complete.
@@ -194,7 +201,7 @@ paper listening and sentence-gap tuning remain ongoing work.
 
 ### Aiden does not appear
 
-- Confirm **Zotero Local TTS 0.1.2** is enabled under **Tools → Plugins**.
+- Confirm **Zotero Local TTS 0.1.3** is enabled under **Tools → Plugins**.
 - Restart Zotero after installing or updating the XPI; an already-open Reader
   can retain its previous voice list.
 - Choose **Voice Mode: Standard**, not Local.
@@ -245,8 +252,8 @@ Run the complete fast test and lint suite:
 
 ```bash
 uv sync --no-editable
-uv run pytest -q
-uv run ruff check .
+uv run --no-sync pytest -q
+uv run --no-sync ruff check .
 node --check zotero-plugin/bootstrap.js
 ./scripts/build-xpi.sh
 ```
@@ -255,7 +262,7 @@ Run the real model integration test after downloading the pinned model:
 
 ```bash
 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 RUN_MLX_INTEGRATION=1 \
-  uv run pytest -q tests/test_integration_mlx.py
+  uv run --no-sync pytest -q tests/test_integration_mlx.py
 ```
 
 Generated audio, model weights, XPI files, wheels, tokens, and private paper

@@ -67,6 +67,29 @@ function localVoiceResponse() {
   };
 }
 
+async function mergedVoiceResponse(apiClient) {
+  const local = localVoiceResponse();
+  try {
+    const original = await originalGetReadAloudVoices.call(apiClient);
+    if (original?.error || !original?.voices) {
+      return local;
+    }
+    const originalStandard = Array.isArray(original.voices.standard)
+      ? original.voices.standard
+      : [];
+    return {
+      ...original,
+      voices: {
+        ...original.voices,
+        standard: [...local.voices.standard, ...originalStandard],
+      },
+    };
+  } catch (error) {
+    log(`original voice listing failed (${error?.name || "Error"})`);
+    return local;
+  }
+}
+
 async function requestAudio(segment, voiceID) {
   if (voiceID !== VOICE_ID) {
     return originalGetReadAloudAudio.call(this, segment, voiceID);
@@ -126,7 +149,7 @@ async function startup() {
   originalGetReadAloudVoices = prototype.getReadAloudVoices;
   originalGetReadAloudAudio = prototype.getReadAloudAudio;
   patchedGetReadAloudVoices = async function () {
-    return localVoiceResponse();
+    return mergedVoiceResponse(this);
   };
   patchedGetReadAloudAudio = requestAudio;
 

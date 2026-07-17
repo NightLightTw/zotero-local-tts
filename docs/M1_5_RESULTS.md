@@ -3,7 +3,7 @@
 Date: 2026-07-17
 Machine: Apple M5, 24 GB unified memory
 Zotero: 9.0.6
-Plugin: Zotero Local TTS 0.1.2
+Plugin: Zotero Local TTS 0.1.3
 
 ## Result
 
@@ -21,6 +21,11 @@ The working integration replaces only:
 The original methods are retained and restored during plugin shutdown. The
 plugin refuses to activate outside Zotero 9.0.x or if either expected method is
 missing.
+
+The final provider calls Zotero's original voice-list method and prepends Aiden
+to its `standard` configurations. Existing Standard and Premium voices are
+therefore preserved. If the metadata request fails, it falls back to an
+Aiden-only response so offline local synthesis remains available.
 
 ## Zotero tier limitation
 
@@ -44,8 +49,11 @@ minute are zero, and its audio still comes exclusively from `127.0.0.1:8766`.
 - XPI installs and remains enabled after restart.
 - The running prototype method is the plugin replacement, confirmed in the
   Zotero Browser Console.
+- The Standard menu simultaneously shows Aiden and Zotero's original six
+  Standard voices; the original Premium response remains untouched.
 - Voice mode is `Standard` and voice is `Aiden (Qwen3-TTS, Local)`.
-- Three authenticated `POST /v1/audio/speech` requests returned HTTP 200.
+- Authenticated `POST /v1/audio/speech` requests returned HTTP 200 during
+  current-segment playback and prefetch.
 - Native play/pause controls work.
 - No paper text or bearer token was written to application logs.
 

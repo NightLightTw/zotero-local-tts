@@ -31,7 +31,10 @@ Zotero 9.0.6 accepts `local` in a remote voice response but excludes remote
 `local` voices from the UI; that tier is populated exclusively from browser/OS
 speech synthesis. The local Qwen voice is therefore declared in the `standard`
 tier and labelled `Aiden (Qwen3-TTS, Local)`. It uses zero credits and never
-contacts Zotero's TTS endpoint.
+contacts Zotero's TTS endpoint. The extension merges this configuration into
+Zotero's original response rather than replacing it, preserving the built-in
+Standard and Premium voices. If the original voice listing is unavailable, the
+local Aiden configuration remains usable as a fallback.
 
 The extension must fail closed: if the expected method or return contract is
 missing, it must disable the local provider and show a compatibility error. It
@@ -60,3 +63,5 @@ prefetch, cancellation, and persistent caching.
 - The local bridge should return complete WAV files for native Web Audio
   decoding. Raw PCM streaming remains out of scope for this path.
 - The UI category says `Standard` even though the provider is entirely local.
+- Listing voices still uses Zotero's original metadata request so the plugin can
+  preserve built-in cloud voices; no paper text is included in that request.
