@@ -5,6 +5,10 @@ Machine: Apple M5, 24 GB unified memory
 Zotero: 9.0.6
 Plugin: Zotero Local TTS 0.1.4
 
+> Historical snapshot: this records the manually started 0.1.4 bridge. Version
+> 0.1.5 added automatic background-service lifecycle; see
+> [M3_RESULTS.md](M3_RESULTS.md).
+
 ## Result
 
 The 0.1.4 XPI installed over 0.1.3, remained enabled after a Zotero restart,
@@ -29,5 +33,5 @@ two local English voices. Its original cloud voice response was not replaced.
 - After testing, the Reader was restored to English (United States), Aiden, and
   a paused state.
 
-The test bridge was stopped after validation. Normal use still requires the
-user to start the bridge as described in the README.
+The test bridge was stopped after this historical validation. At 0.1.4, normal
+use still required manual startup; this limitation was removed in 0.1.5.

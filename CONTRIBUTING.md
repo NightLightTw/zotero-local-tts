@@ -4,8 +4,8 @@ Thanks for helping improve Zotero Local TTS.
 
 ## Development setup
 
-The supported development environment is an Apple Silicon Mac with Python 3.12
-and `uv`:
+The supported development environment is an Apple Silicon Mac with Python 3.12,
+Node.js 20 or later, and `uv`:
 
 ```bash
 git clone https://github.com/NightLightTw/zotero-local-tts.git

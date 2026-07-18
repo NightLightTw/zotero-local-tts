@@ -11,6 +11,8 @@ class APIClient {}
 
 let voiceResponseMode = "success";
 const localRequests = [];
+const localFailureNotices = [];
+let localRequestFailure = null;
 
 const originalGetReadAloudVoices = async function () {
   if (voiceResponseMode === "throw") {
@@ -45,11 +47,19 @@ const context = vm.createContext({
   Components: { interfaces: { nsIFile: class {} } },
   IOUtils: { readUTF8: async () => "test-token" },
   PathUtils: { join: (...parts) => parts.join("/") },
-  Services: { dirsvc: { get: () => ({ path: "/Users/test" }) } },
+  Services: {
+    dirsvc: { get: () => ({ path: "/Users/test" }) },
+    prompt: {
+      alert: (_parent, title, message) => localFailureNotices.push({ title, message }),
+    },
+  },
   Zotero: {
     HTTP: {
       request: async (...args) => {
         localRequests.push(args);
+        if (localRequestFailure) {
+          throw localRequestFailure;
+        }
         return { response: "local-audio" };
       },
     },
@@ -124,6 +134,31 @@ for (const [voiceID, engineVoice] of Object.entries(nativeVoices)) {
   assert.equal(payload.voice, engineVoice);
 }
 assert.equal(localRequests.length, 9);
+
+localRequestFailure = new Error("connection refused");
+const localFailure = await client.getReadAloudAudio(
+  { text: "Offline sentence." },
+  "zotero-local-qwen-aiden"
+);
+assert.equal(localFailure.error, "unknown");
+assert.equal(localFailureNotices.length, 1);
+assert.equal(localFailureNotices[0].title, "Zotero Local TTS");
+assert.match(localFailureNotices[0].message, /127\.0\.0\.1:8766/);
+assert.match(localFailureNotices[0].message, /Internet access is not required/);
+localRequestFailure = null;
+
+assert.match(
+  vm.runInContext("localFailureMessage({ status: 401 })", context),
+  /token/
+);
+assert.match(
+  vm.runInContext("localFailureMessage({ localTTSFailure: 'token' })", context),
+  /token/
+);
+assert.match(
+  vm.runInContext("localFailureMessage({ status: 503 })", context),
+  /could not synthesize/
+);
 
 for (const mode of ["throw", "error"]) {
   voiceResponseMode = mode;
