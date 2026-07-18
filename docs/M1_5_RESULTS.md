@@ -5,6 +5,10 @@ Machine: Apple M5, 24 GB unified memory
 Zotero: 9.0.6
 Plugin: Zotero Local TTS 0.1.3
 
+> Historical snapshot: this records the 0.1.3 integration spike. Its
+> LaunchAgent and diagnostic follow-ups were completed in 0.1.5; see
+> [M3_RESULTS.md](M3_RESULTS.md).
+
 ## Result
 
 The native provider-injection spike passed. Zotero displayed
@@ -57,7 +61,7 @@ minute are zero, and its audio still comes exclusively from `127.0.0.1:8766`.
 - Native play/pause controls work.
 - No paper text or bearer token was written to application logs.
 
-## Remaining work
+## Remaining work at 0.1.3
 
 - Add a macOS LaunchAgent or equivalent supported lifecycle so the bridge starts
   automatically and stays available after login.

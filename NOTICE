@@ -3,4 +3,5 @@ Copyright 2026 NightLightTw
 
 This product includes project-owned software developed for Zotero Local TTS.
 Third-party software and model weights are not bundled in the Zotero plugin and
-remain subject to their respective licenses. See docs/THIRD_PARTY.md.
+remain subject to their respective licenses. See the public inventory at
+https://github.com/NightLightTw/zotero-local-tts/blob/main/docs/THIRD_PARTY.md.

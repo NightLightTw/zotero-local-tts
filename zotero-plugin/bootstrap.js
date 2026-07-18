@@ -58,6 +58,9 @@ let originalGetReadAloudVoices;
 let originalGetReadAloudAudio;
 let patchedGetReadAloudVoices;
 let patchedGetReadAloudAudio;
+let lastLocalFailureNotice = 0;
+
+const LOCAL_FAILURE_NOTICE_INTERVAL_MS = 30_000;
 
 function log(message) {
   Zotero.debug(`${PLUGIN_NAME}: ${message}`);
@@ -80,6 +83,35 @@ async function readToken() {
     throw new Error("The local bridge token file is empty");
   }
   return token;
+}
+
+function localFailureMessage(error) {
+  const status = Number(error?.status || error?.xmlhttp?.status || 0);
+  if (error?.localTTSFailure === "token" || status === 401) {
+    return "The local TTS bridge rejected Zotero's token. Reinstall or restart the background service.";
+  }
+  if (status === 503) {
+    return "The local TTS model could not synthesize this text. Check bridge-error.log for the safe failure category.";
+  }
+  return "Zotero could not reach the local TTS bridge at 127.0.0.1:8766. Start or reinstall the background service, then choose Retry. Internet access is not required.";
+}
+
+function reportLocalFailure(error) {
+  const status = Number(error?.status || error?.xmlhttp?.status || 0);
+  log(
+    `local synthesis failed (${error?.name || "Error"}, status=${status || "unavailable"})`
+  );
+
+  const now = Date.now();
+  if (now - lastLocalFailureNotice < LOCAL_FAILURE_NOTICE_INTERVAL_MS) {
+    return;
+  }
+  lastLocalFailureNotice = now;
+  try {
+    Services.prompt.alert(null, PLUGIN_NAME, localFailureMessage(error));
+  } catch (noticeError) {
+    log(`could not display local failure details (${noticeError?.name || "Error"})`);
+  }
 }
 
 function localVoiceResponse() {
@@ -163,7 +195,16 @@ async function requestAudio(segment, voiceID) {
   }
 
   try {
-    const token = await readToken();
+    let token;
+    try {
+      token = await readToken();
+    } catch (tokenError) {
+      const wrappedError = new Error("The local bridge token could not be read", {
+        cause: tokenError,
+      });
+      wrappedError.localTTSFailure = "token";
+      throw wrappedError;
+    }
     const xmlhttp = await Zotero.HTTP.request(
       "POST",
       `${BRIDGE_URL}/v1/audio/speech`,
@@ -187,8 +228,10 @@ async function requestAudio(segment, voiceID) {
     return { audio: xmlhttp.response };
   } catch (error) {
     // Never log the request text or bearer token.
-    log(`local synthesis failed (${error?.name || "Error"})`);
-    return { error: "network" };
+    reportLocalFailure(error);
+    // Zotero 9 only defines network, quota, and unknown Read Aloud errors.
+    // "unknown" avoids falsely instructing an offline user to check the internet.
+    return { error: "unknown" };
   }
 }
 

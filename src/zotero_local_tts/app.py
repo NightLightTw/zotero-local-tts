@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import secrets
 from typing import Annotated
 
@@ -12,6 +13,8 @@ from pydantic import BaseModel, Field
 
 from .config import VOICE_LOCALES, Settings, default_settings
 from .engine import TTSEngine, UnconfiguredEngine
+
+logger = logging.getLogger(__name__)
 
 
 class SpeechRequest(BaseModel):
@@ -29,7 +32,12 @@ def create_app(
     settings = settings or default_settings()
     engine = engine or UnconfiguredEngine()
     semaphore = asyncio.Semaphore(settings.max_concurrency)
-    app = FastAPI(title="Zotero Local TTS", docs_url=None, redoc_url=None)
+    app = FastAPI(
+        title="Zotero Local TTS",
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None,
+    )
 
     async def authorize(
         request: Request,
@@ -91,6 +99,8 @@ def create_app(
                     1.0,
                 )
             except RuntimeError as error:
+                reason = getattr(error, "reason", "runtime_error")
+                logger.error("Local synthesis is unavailable (reason=%s)", reason)
                 raise HTTPException(
                     status.HTTP_503_SERVICE_UNAVAILABLE,
                     "Local synthesis is unavailable",

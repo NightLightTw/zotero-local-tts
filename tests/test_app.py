@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import logging
 import wave
 
 from fastapi.testclient import TestClient
@@ -30,6 +31,12 @@ class FakeEngine:
         return output.getvalue()
 
 
+class FailingEngine:
+    def synthesize(self, text: str, model_id: str, voice: str, speed: float) -> bytes:
+        del model_id, voice, speed
+        raise RuntimeError(f"Do not log this document text: {text}")
+
+
 def client() -> TestClient:
     settings = Settings(token=TOKEN, voices=("Aiden",), allowed_hosts=("testserver",))
     return TestClient(create_app(FakeEngine(), settings))
@@ -52,6 +59,11 @@ def valid_payload() -> dict[str, object]:
 def test_requires_bearer_token() -> None:
     response = client().get("/health")
     assert response.status_code == 401
+
+
+def test_openapi_schema_is_not_exposed() -> None:
+    response = client().get("/openapi.json")
+    assert response.status_code == 404
 
 
 def test_rejects_unlisted_host_even_with_valid_token() -> None:
@@ -134,3 +146,21 @@ def test_rejects_unimplemented_synthesis_speed() -> None:
         json=payload,
     )
     assert response.status_code == 400
+
+
+def test_synthesis_failure_logs_only_safe_category(caplog) -> None:
+    settings = Settings(token=TOKEN, voices=("Aiden",), allowed_hosts=("testserver",))
+    app = TestClient(create_app(FailingEngine(), settings))
+    payload = valid_payload()
+    payload["input"] = "confidential paper sentence"
+
+    with caplog.at_level(logging.ERROR, logger="zotero_local_tts.app"):
+        response = app.post(
+            "/v1/audio/speech",
+            headers=auth_headers(),
+            json=payload,
+        )
+
+    assert response.status_code == 503
+    assert "reason=runtime_error" in caplog.text
+    assert "confidential paper sentence" not in caplog.text

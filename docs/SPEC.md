@@ -1,7 +1,14 @@
 # Zotero Local TTS — Product and Technical Specification
 
-Status: Draft v0.2
-Last updated: 2026-07-17
+Status: Draft v0.3
+Last updated: 2026-07-18
+
+This is the target product specification, not a statement that every section is
+implemented. Version 0.1.5 currently provides the authenticated offline bridge,
+nine native-language voices, Zotero provider injection, complete WAV responses,
+macOS LaunchAgent lifecycle, and local failure diagnostics. Custom audio caching,
+academic-text normalization, inference cancellation, a preferences UI, voice
+cloning, streaming, and the 0.6B model remain planned.
 
 ## 1. Objective
 
@@ -18,10 +25,12 @@ reasonable start-up latency and continuous playback.
 
 - Runtime: MLX-Audio on Apple Silicon
 - Primary model: `mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit`
-- Low-latency fallback: `mlx-community/Qwen3-TTS-12Hz-0.6B-CustomVoice-8bit`
+- Low-latency candidate (not currently exposed):
+  `mlx-community/Qwen3-TTS-12Hz-0.6B-CustomVoice-8bit`
 - Service boundary: HTTP on loopback only (`127.0.0.1`)
 - Service: a thin, project-owned bridge in front of MLX-Audio
-- TTS contract: stable project API with OpenAI-compatible `POST /v1/audio/speech`
+- TTS contract: stable project API with an OpenAI-shaped subset of
+  `POST /v1/audio/speech`
 - Client: Zotero 9 extension that reuses native Read Aloud where feasible; a
   temporary Zotero fork may be used only for early integration research
 - Audio format for the MVP: WAV
@@ -36,8 +45,8 @@ rewriting document navigation or playback logic.
 Qwen3-TTS CustomVoice 1.7B is the default for nine fixed high-quality voices.
 Each speaker is exposed only under its native-language locale. With 24 GB
 unified memory, it should fit comfortably alongside Zotero and the local
-service. The 0.6B model remains available when lower time-to-first-audio is more
-important than maximum voice quality.
+service. The 0.6B model is a future candidate when lower time-to-first-audio is
+more important than maximum voice quality; version 0.1.5 does not expose it.
 
 Zero-shot voice cloning is a later, separate mode using a Qwen3-TTS Base model.
 CustomVoice, Base, and VoiceDesign are not interchangeable model variants and
@@ -54,9 +63,9 @@ must have separate cache identities and lifecycle policies.
 4. Generate English speech from selected or current text in Zotero.
 5. Preserve native play, pause, stop, resume, prefetch, highlighting, and saved
    position behavior when the native integration path is selected.
-6. Cache audio locally by model, voice, speed, normalization version, and text.
-7. Provide conservative academic-text cleanup that can be disabled.
-8. Package the Zotero side as an installable `.xpi` extension.
+6. Reuse Zotero's native audio cache; if a project-owned cache is later added,
+   key it by model, voice, speed, normalization version, and text.
+7. Package the Zotero side as an installable `.xpi` extension.
 
 ### Later phases
 
@@ -64,6 +73,7 @@ must have separate cache identities and lifecycle policies.
 - Highlight the currently spoken sentence or paragraph.
 - Restore the last listening position.
 - Add configurable citation, footnote, URL, and bibliography handling.
+- Add conservative, independently configurable academic-text normalization.
 - Add a Qwen3-TTS Base model and user-provided reference audio for zero-shot
   voice cloning, including explicit model-switch latency and memory handling.
 - Add a settings UI for model, voice, speed, chunk size, and cache limits.
@@ -84,28 +94,28 @@ must have separate cache identities and lifecycle policies.
 Zotero 9 extension
   ├── injects a local provider into native Read Aloud when feasible
   ├── preserves native chunking, playback, prefetch, highlight, and position
-  ├── applies optional versioned academic-text normalization
+  ├── will later apply optional versioned academic-text normalization
   └── calls the authenticated loopback TTS API
                   │
                   ▼
 Project-owned local TTS bridge
   ├── exposes stable model aliases and voice metadata
-  ├── validates origin, token, size, concurrency, model, and voice
+  ├── validates origin, token, size, model, and voice; serializes inference
   ├── calls MLX-Audio with offline mode enforced
   └── returns complete WAV audio
                   │
                   ▼
 MLX-Audio
   ├── loads an allowlisted Qwen3-TTS model
-  ├── generates WAV audio
-  └── keeps only a bounded in-memory cache
+  └── generates WAV audio
 ```
 
 Zotero's native Read Aloud implementation should own persistent audio caching,
-document state, playback order, prefetch, highlighting, and saved position when
-the provider-injection path proves compatible. The bridge owns model lifecycle,
-validation, cancellation, and synthesis. Neither component should require an
-internet connection after dependencies and pinned model weights are downloaded.
+document state, playback order, prefetch, highlighting, and saved position. The
+bridge owns model lifecycle, validation, inference serialization, and synthesis;
+active-inference cancellation is planned. Local synthesis does not require an
+internet connection after dependencies and pinned model weights are downloaded,
+although Zotero may independently request cloud-voice metadata or update checks.
 
 ## 6. Academic-text normalization
 
@@ -125,6 +135,10 @@ Initial rules to evaluate:
 Every destructive cleanup rule must have an independent setting and tests.
 
 ## 7. Chunking and playback
+
+This section describes the target behavior once explicit cancellation and
+settings controls are implemented; version 0.1.5 currently delegates playback,
+prefetch, and queue ownership to Zotero's native Reader.
 
 - Split on sentence boundaries, then combine short sentences.
 - Initial target: 1–3 sentences or approximately 250–500 characters per chunk.
@@ -160,10 +174,12 @@ Minimum synthesis request:
 ```
 
 The bridge must bind to `127.0.0.1`, require a per-install random bearer token,
-validate `Host` and `Origin`, and reject unexpectedly large or concurrent
-requests. It must allowlist model aliases and voices, reject arbitrary local
-reference-audio paths, and prevent runtime model downloads. The token and
-configuration files must be readable only by the current user.
+validate `Host` and `Origin`, reject unexpectedly large requests, and serialize
+synthesis according to the configured inference concurrency limit. It must
+allowlist model aliases and voices, reject arbitrary local reference-audio
+paths, and prevent runtime model downloads. The token and configuration files
+containing secrets must be readable only by the current user. The non-secret
+LaunchAgent definition may use the standard macOS `0644` permissions.
 
 ## 9. Performance targets
 
@@ -192,9 +208,11 @@ the 0.6B model before changing the architecture.
 - Set Hugging Face offline mode during normal service operation.
 - Do not log full document text by default.
 - Do not include paper text in error telemetry.
-- Store generated audio under a user-local cache directory, not in the Git
-  repository or Zotero attachment storage.
-- Provide a clear-cache command and configurable size limit.
+- Keep generated audio in Zotero's user-local native cache, not in the Git
+  repository or Zotero attachment storage. A project-owned persistent cache is
+  not currently implemented.
+- If a project-owned persistent cache is introduced, provide a clear-cache
+  command and configurable size limit.
 - Keep reference voice samples local and require explicit opt-in before use.
 - Do not clone a person's voice without permission.
 
@@ -207,7 +225,9 @@ The MVP is complete when:
 3. The extension can play, pause, resume, and stop generated audio.
 4. A multi-paragraph sample plays without recurring long pauses between every
    sentence.
-5. No network request leaves the machine during normal synthesis.
+5. No request from the local synthesis path or bridge process leaves the
+   machine during normal synthesis; unrelated Zotero cloud metadata/update
+   requests are outside this boundary.
 6. Restarting Zotero does not require reinstalling the extension.
 7. The test suite covers chunking and every enabled destructive normalization
    rule.
@@ -215,7 +235,7 @@ The MVP is complete when:
 9. The provider integration is tested on Zotero 9.0.6 and one later available
    Zotero 9.0.x release before declaring compatibility.
 10. With networking disabled, the installed service starts and synthesizes; an
-    observed synthesis run produces no DNS or HTTP traffic and no log contains
+    observed bridge process has no external TCP connection and no log contains
     full input text.
 11. The repository records exact dependency locks, model revision, source,
     license, and required notices; distributions contain no model weights or
@@ -223,18 +243,20 @@ The MVP is complete when:
 
 ## 12. Milestones
 
-### M0 — Model benchmark
+### M0 — Primary-model benchmark complete; 0.6B comparison deferred
 
 - Install MLX-Audio in an isolated environment.
-- Benchmark Qwen3-TTS 1.7B 8-bit and 0.6B with the same English paper excerpt.
+- Benchmark Qwen3-TTS 1.7B 8-bit; defer the 0.6B comparison until its compatible
+  model artifact is available and selected for evaluation.
 - Record cold start, warm first-audio latency, RTF, memory use, and subjective
   listening notes.
 - Select the default model and voice.
 
-### M1 — Local service
+### M1 — Local service prototype complete
 
 - Lock the API contract.
-- Add model lifecycle, validation, caching, and health reporting.
+- Add model lifecycle, validation, inference serialization, and health reporting.
+- Delegate persistent audio caching to Zotero's native Reader.
 - Add automated API tests.
 
 ### M1.5 — Zotero native integration spike (complete)
@@ -244,17 +266,18 @@ The MVP is complete when:
 - Compare private native-provider injection against a standalone player.
 - Record the chosen path and upgrade risk in an architecture decision record.
 
-### M2 — Zotero integration prototype (in progress)
+### M2 — Zotero integration prototype complete
 
 - Read selected text.
 - Implement playback controls and a two-chunk queue.
 - Validate behavior against Zotero 9.0.6.
 
-### M3 — Installable extension
+### M3 — Installable extension (in progress)
 
 - Package as `.xpi`.
-- Add preferences and error handling.
+- Add local error handling and diagnostics.
 - Document installation and removal.
+- Add a preferences UI in a later M3 iteration.
 
 ### M4 — Academic listening quality
 
