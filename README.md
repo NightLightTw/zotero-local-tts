@@ -247,6 +247,7 @@ The downloaded model and local token remain on disk until removed manually.
 - [Product and technical specification](docs/SPEC.md)
 - [M5 model benchmark](docs/M0_RESULTS.md)
 - [Zotero native integration results](docs/M1_5_RESULTS.md)
+- [Nine-voice Zotero validation](docs/M2_RESULTS.md)
 - [Architecture decision: reuse native Read Aloud](docs/ADR-0001-zotero-read-aloud-integration.md)
 - [Third-party components and model revision](docs/THIRD_PARTY.md)
 
