@@ -77,12 +77,13 @@ const client = new APIClient();
 const response = await client.getReadAloudVoices();
 assert.equal(response.voices.standard.length, 2);
 const localConfiguration = response.voices.standard[0];
-assert.equal(Object.keys(localConfiguration.voices).length, 9);
+assert.equal(Object.keys(localConfiguration.voices).length, 10);
 assert.deepEqual(Array.from(localConfiguration.locales["en-US"].default), [
   "zotero-local-qwen-aiden",
 ]);
 assert.deepEqual(Array.from(localConfiguration.locales["en-US"].other), [
   "zotero-local-qwen-ryan",
+  "zotero-local-qwen-ryan-academic",
 ]);
 assert.equal(localConfiguration.locales["zh-CN"].default.length, 1);
 assert.equal(localConfiguration.locales["zh-CN"].other.length, 4);
@@ -115,6 +116,7 @@ assert.deepEqual(JSON.parse(localRequests[0][2].body), {
   input: "Local sentence.",
   response_format: "wav",
   speed: 1.0,
+  profile: "standard-v1",
 });
 
 const nativeVoices = {
@@ -134,6 +136,16 @@ for (const [voiceID, engineVoice] of Object.entries(nativeVoices)) {
   assert.equal(payload.voice, engineVoice);
 }
 assert.equal(localRequests.length, 9);
+
+const academicResult = await client.getReadAloudAudio(
+  { text: "Academic evidence should be interpreted carefully." },
+  "zotero-local-qwen-ryan-academic"
+);
+assert.equal(academicResult.audio, "local-audio");
+const academicPayload = JSON.parse(localRequests.at(-1)[2].body);
+assert.equal(academicPayload.voice, "Ryan");
+assert.equal(academicPayload.profile, "academic-neutral-v1");
+assert.equal(localRequests.length, 10);
 
 localRequestFailure = new Error("connection refused");
 const localFailure = await client.getReadAloudAudio(

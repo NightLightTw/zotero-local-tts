@@ -42,9 +42,26 @@ def test_cached_qwen_model_returns_all_nine_voices_through_bridge() -> None:
                 "input": text,
                 "response_format": "wav",
                 "speed": 1.0,
+                "profile": "standard-v1",
             },
         )
         assert response.status_code == 200, voice
         assert response.headers["content-type"] == "audio/wav"
         assert response.content.startswith(b"RIFF")
         assert len(response.content) > 1_000
+
+    academic_response = client.post(
+        "/v1/audio/speech",
+        headers={"Authorization": "Bearer integration-token"},
+        json={
+            "model": settings.model_alias,
+            "voice": "Ryan",
+            "input": "Scientific claims require reproducible evidence.",
+            "response_format": "wav",
+            "speed": 1.0,
+            "profile": "academic-neutral-v1",
+        },
+    )
+    assert academic_response.status_code == 200
+    assert academic_response.headers["content-type"] == "audio/wav"
+    assert academic_response.content.startswith(b"RIFF")

@@ -1,10 +1,10 @@
 # Zotero Local TTS — Product and Technical Specification
 
 Status: Draft v0.3
-Last updated: 2026-07-18
+Last updated: 2026-07-29
 
 This is the target product specification, not a statement that every section is
-implemented. Version 0.1.5 currently provides the authenticated offline bridge,
+implemented. Version 0.1.6 currently provides the authenticated offline bridge,
 nine native-language voices, Zotero provider injection, complete WAV responses,
 macOS LaunchAgent lifecycle, and local failure diagnostics. Custom audio caching,
 academic-text normalization, inference cancellation, a preferences UI, voice
@@ -46,7 +46,16 @@ Qwen3-TTS CustomVoice 1.7B is the default for nine fixed high-quality voices.
 Each speaker is exposed only under its native-language locale. With 24 GB
 unified memory, it should fit comfortably alongside Zotero and the local
 service. The 0.6B model is a future candidate when lower time-to-first-audio is
-more important than maximum voice quality; version 0.1.5 does not expose it.
+more important than maximum voice quality; version 0.1.6 does not expose it.
+
+Ryan additionally has an `academic-neutral-v1` synthesis profile. It keeps the
+same built-in speaker but applies concise neutral-academic style guidance,
+moderately constrained sampling, and a length-aware generation ceiling. The
+original Ryan entry remains available as an A/B baseline.
+
+All synthesis profiles use the same length-aware generation ceiling because the
+underlying model can occasionally miss its end token. The standard profile
+otherwise retains MLX-Audio's upstream sampling defaults.
 
 Zero-shot voice cloning is a later, separate mode using a Qwen3-TTS Base model.
 CustomVoice, Base, and VoiceDesign are not interchangeable model variants and
@@ -137,7 +146,7 @@ Every destructive cleanup rule must have an independent setting and tests.
 ## 7. Chunking and playback
 
 This section describes the target behavior once explicit cancellation and
-settings controls are implemented; version 0.1.5 currently delegates playback,
+settings controls are implemented; version 0.1.6 currently delegates playback,
 prefetch, and queue ownership to Zotero's native Reader.
 
 - Split on sentence boundaries, then combine short sentences.
