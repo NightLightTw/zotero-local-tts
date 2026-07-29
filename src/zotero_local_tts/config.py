@@ -35,6 +35,10 @@ VOICE_LANGUAGES = {
 
 DEFAULT_VOICES = tuple(VOICE_LOCALES)
 
+DEFAULT_PROFILE = "standard-v1"
+ACADEMIC_PROFILE = "academic-neutral-v1"
+DEFAULT_PROFILES = (DEFAULT_PROFILE, ACADEMIC_PROFILE)
+
 
 @dataclass(frozen=True)
 class Settings:
@@ -46,6 +50,7 @@ class Settings:
     model_alias: str = "qwen3-customvoice-1.7b-8bit"
     model_id: str = "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit"
     voices: tuple[str, ...] = DEFAULT_VOICES
+    profiles: tuple[str, ...] = DEFAULT_PROFILES
     allowed_origins: tuple[str, ...] = ()
     allowed_hosts: tuple[str, ...] = ("127.0.0.1", "localhost", "::1")
 

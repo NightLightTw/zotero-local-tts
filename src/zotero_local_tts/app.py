@@ -11,7 +11,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
-from .config import VOICE_LOCALES, Settings, default_settings
+from .config import DEFAULT_PROFILE, VOICE_LOCALES, Settings, default_settings
 from .engine import TTSEngine, UnconfiguredEngine
 
 logger = logging.getLogger(__name__)
@@ -23,6 +23,7 @@ class SpeechRequest(BaseModel):
     input: str = Field(min_length=1)
     response_format: str = "wav"
     speed: float = Field(default=1.0, ge=0.5, le=2.0)
+    profile: str = DEFAULT_PROFILE
 
 
 def create_app(
@@ -79,6 +80,8 @@ def create_app(
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "Model is not allowlisted")
         if payload.voice not in settings.voices:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "Voice is not allowlisted")
+        if payload.profile not in settings.profiles:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Profile is not allowlisted")
         if payload.response_format != "wav":
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "Only WAV is supported")
         if payload.speed != 1.0:
@@ -97,6 +100,7 @@ def create_app(
                     settings.model_id,
                     payload.voice,
                     1.0,
+                    payload.profile,
                 )
             except RuntimeError as error:
                 reason = getattr(error, "reason", "runtime_error")

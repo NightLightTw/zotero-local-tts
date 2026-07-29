@@ -17,6 +17,12 @@ const LOCAL_VOICES = {
     label: "Ryan (Qwen3-TTS, Local)",
     sample: "This is Ryan, reading locally with Qwen three text to speech.",
   },
+  "zotero-local-qwen-ryan-academic": {
+    engineVoice: "Ryan",
+    profile: "academic-neutral-v1",
+    label: "Ryan Academic (Qwen3-TTS, Local)",
+    sample: "Reliable academic evidence requires careful measurement and clear interpretation.",
+  },
   "zotero-local-qwen-vivian": {
     engineVoice: "Vivian",
     label: "Vivian (Qwen3-TTS, Local)",
@@ -128,7 +134,10 @@ function localVoiceResponse() {
           locales: {
             "en-US": {
               default: ["zotero-local-qwen-aiden"],
-              other: ["zotero-local-qwen-ryan"],
+              other: [
+                "zotero-local-qwen-ryan",
+                "zotero-local-qwen-ryan-academic",
+              ],
             },
             "zh-CN": {
               default: ["zotero-local-qwen-vivian"],
@@ -219,6 +228,7 @@ async function requestAudio(segment, voiceID) {
           input,
           response_format: "wav",
           speed: 1.0,
+          profile: localVoice.profile || "standard-v1",
         }),
         responseType: "blob",
         successCodes: [200],

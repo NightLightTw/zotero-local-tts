@@ -12,7 +12,7 @@ def test_manifest_is_pinned_to_supported_zotero_minor_version() -> None:
     manifest = json.loads((PLUGIN_ROOT / "manifest.json").read_text())
     application = manifest["applications"]["zotero"]
 
-    assert manifest["version"] == "0.1.5"
+    assert manifest["version"] == "0.1.6"
     assert application["id"] == "zotero-local-tts@zhangzizhong.local"
     assert application["update_url"].endswith("/updates.json")
     assert application["strict_min_version"] == "9.0"
@@ -56,7 +56,7 @@ def test_built_xpi_has_expected_files_at_archive_root() -> None:
             "manifest.json",
         }
         manifest = json.loads(xpi.read("manifest.json"))
-        assert manifest["version"] == "0.1.5"
+        assert manifest["version"] == "0.1.6"
 
 
 def test_build_script_derives_archive_version_from_manifest() -> None:

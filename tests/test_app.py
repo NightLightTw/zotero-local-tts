@@ -20,8 +20,10 @@ TOKEN = "test-token"
 
 
 class FakeEngine:
-    def synthesize(self, text: str, model_id: str, voice: str, speed: float) -> bytes:
-        del text, model_id, voice, speed
+    def synthesize(
+        self, text: str, model_id: str, voice: str, speed: float, profile: str
+    ) -> bytes:
+        del text, model_id, voice, speed, profile
         output = io.BytesIO()
         with wave.open(output, "wb") as wav:
             wav.setnchannels(1)
@@ -32,8 +34,10 @@ class FakeEngine:
 
 
 class FailingEngine:
-    def synthesize(self, text: str, model_id: str, voice: str, speed: float) -> bytes:
-        del model_id, voice, speed
+    def synthesize(
+        self, text: str, model_id: str, voice: str, speed: float, profile: str
+    ) -> bytes:
+        del model_id, voice, speed, profile
         raise RuntimeError(f"Do not log this document text: {text}")
 
 
@@ -53,6 +57,7 @@ def valid_payload() -> dict[str, object]:
         "input": "A short academic sentence.",
         "response_format": "wav",
         "speed": 1.0,
+        "profile": "standard-v1",
     }
 
 
@@ -112,6 +117,20 @@ def test_returns_wav_audio() -> None:
     assert response.content.startswith(b"RIFF")
 
 
+def test_profile_defaults_for_older_plugin_requests() -> None:
+    payload = valid_payload()
+    del payload["profile"]
+
+    response = client().post(
+        "/v1/audio/speech",
+        headers=auth_headers(),
+        json=payload,
+    )
+
+    assert response.status_code == 200
+    assert response.content.startswith(b"RIFF")
+
+
 def test_rejects_unlisted_model_and_voice() -> None:
     payload = valid_payload()
     payload["model"] = "arbitrary-model"
@@ -124,6 +143,19 @@ def test_rejects_unlisted_model_and_voice() -> None:
     assert (
         client().post("/v1/audio/speech", headers=auth_headers(), json=payload).status_code == 400
     )
+
+
+def test_rejects_unlisted_profile() -> None:
+    payload = valid_payload()
+    payload["profile"] = "arbitrary-profile"
+
+    response = client().post(
+        "/v1/audio/speech",
+        headers=auth_headers(),
+        json=payload,
+    )
+
+    assert response.status_code == 400
 
 
 def test_rejects_oversized_text() -> None:

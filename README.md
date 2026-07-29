@@ -84,7 +84,7 @@ enabled, so it will fail closed rather than downloading a model unexpectedly.
 ```
 
 The command prints the path to an XPI such as
-`dist/zotero-local-tts-0.1.5.xpi`.
+`dist/zotero-local-tts-0.1.6.xpi`.
 
 ### 4. Install the plugin
 
@@ -138,7 +138,11 @@ discards remote-provider voices marked `local`. The plugin therefore appears
 under `Standard`, but it uses zero Zotero credits and sends synthesis requests
 only to `127.0.0.1`. The nine built-in speakers are restricted to their native
 language menus: Aiden/Ryan for English; Vivian/Serena/Uncle Fu/Dylan/Eric for
-Chinese; Ono Anna for Japanese; and Sohee for Korean. Zotero's existing
+Chinese; Ono Anna for Japanese; and Sohee for Korean. English also includes
+**Ryan Academic**, a second profile of the same Ryan speaker with neutral
+academic style guidance, moderately constrained sampling, and a safety limit
+for failed end-of-speech detection. The same safety limit also protects the
+other local voices without changing their normal sampling settings. Zotero's existing
 Standard and Premium voices remain available when Zotero's voice metadata is
 reachable; selecting one of them uses Zotero's original cloud behavior.
 
@@ -174,7 +178,7 @@ The application bundle and Zotero database are not modified.
 | Authentication | Per-install random bearer token |
 | Browser requests | Origins rejected by default |
 | Model loading | Allowlisted model and offline-only normal operation |
-| Voice selection | Nine allowlisted speakers, restricted to native-language menus |
+| Voice selection | Nine allowlisted speakers plus one Ryan academic profile, restricted to native-language menus |
 | Input size | Maximum 2,000 characters per request |
 | Logs | Paper text and bearer tokens are not logged |
 | Audio | Returned to Zotero as WAV; not committed to this repository |
@@ -214,14 +218,17 @@ paper listening and sentence-gap tuning remain ongoing work.
   `Local` tier, so Qwen3-TTS voices must appear in `Standard` on Zotero 9.0.x.
 - Zotero's inline failure text is limited to its built-in error categories; the
   plugin displays a separate local diagnostic for bridge, token, or model errors.
-- Voice cloning, streaming, academic-text cleanup, and cache
-  management are planned rather than complete.
+- Ryan Academic retains Zotero's native sentence-by-sentence segmentation.
+  Bounded multi-sentence chunking and academic-text cleanup remain future
+  evaluations.
+- Voice cloning, streaming, and cache management are planned rather than
+  complete.
 
 ## Troubleshooting
 
 ### Local voices do not appear
 
-- Confirm **Zotero Local TTS 0.1.5** is enabled under **Tools → Plugins**.
+- Confirm **Zotero Local TTS 0.1.6** is enabled under **Tools → Plugins**.
 - Restart Zotero after installing or updating the XPI; an already-open Reader
   can retain its previous voice list.
 - Choose **Voice Mode: Standard**, not Local.
