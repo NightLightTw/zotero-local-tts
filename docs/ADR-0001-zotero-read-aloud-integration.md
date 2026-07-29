@@ -38,8 +38,9 @@ Standard and Premium voices. If the original voice listing is unavailable, the
 local voice configuration remains usable as a fallback.
 
 The extension must fail closed: if the expected method or return contract is
-missing, it must disable the local provider and show a compatibility error. It
-must not alter or replace the Zotero application bundle.
+missing, plugin startup must fail with a compatibility error and leave the
+local provider disabled. It must not alter or replace the Zotero application
+bundle.
 
 ## Spike result
 

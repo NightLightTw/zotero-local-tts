@@ -13,6 +13,14 @@ from mlx_audio.tts.utils import load_model
 from .config import VOICE_LANGUAGES
 
 
+class SynthesisError(RuntimeError):
+    """A synthesis failure with a safe, non-document diagnostic reason."""
+
+    def __init__(self, reason: str, message: str) -> None:
+        super().__init__(message)
+        self.reason = reason
+
+
 class TTSEngine(Protocol):
     def synthesize(self, text: str, model_id: str, voice: str, speed: float) -> bytes:
         """Return a complete WAV file."""
@@ -24,7 +32,7 @@ class UnconfiguredEngine:
 
     def synthesize(self, text: str, model_id: str, voice: str, speed: float) -> bytes:
         del text, model_id, voice, speed
-        raise RuntimeError("MLX-Audio engine is not configured")
+        raise SynthesisError("engine_unconfigured", "MLX-Audio engine is not configured")
 
 
 class MLXAudioEngine:
@@ -42,8 +50,9 @@ class MLXAudioEngine:
         try:
             model = load_model(model_id)
         except Exception as error:
-            raise RuntimeError(
-                "The allowlisted model is not available in the local Hugging Face cache"
+            raise SynthesisError(
+                "model_unavailable",
+                "The allowlisted model is not available in the local Hugging Face cache",
             ) from error
         self._model = model
         self._model_id = model_id
@@ -53,7 +62,10 @@ class MLXAudioEngine:
         model = self._load(model_id)
         language = VOICE_LANGUAGES.get(voice)
         if language is None:
-            raise RuntimeError("The requested voice has no configured native language")
+            raise SynthesisError(
+                "voice_language_unconfigured",
+                "The requested voice has no configured native language",
+            )
         chunks: list[np.ndarray] = []
         sample_rate = int(getattr(model, "sample_rate", 24_000))
         try:
@@ -67,9 +79,9 @@ class MLXAudioEngine:
                 if audio.size:
                     chunks.append(audio)
         except Exception as error:
-            raise RuntimeError("MLX-Audio synthesis failed") from error
+            raise SynthesisError("generation_failed", "MLX-Audio synthesis failed") from error
         if not chunks:
-            raise RuntimeError("MLX-Audio returned no audio")
+            raise SynthesisError("empty_audio", "MLX-Audio returned no audio")
 
         output = io.BytesIO()
         sf.write(output, np.concatenate(chunks), sample_rate, format="WAV")

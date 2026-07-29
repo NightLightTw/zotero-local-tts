@@ -1,7 +1,8 @@
 # Third-party components
 
-This file is an initial inventory, not legal advice. Pin exact revisions before
-shipping an installer or extension release.
+This file records the current high-level runtime inventory and is not legal
+advice. Exact Python versions are locked in `uv.lock`; a machine-readable SBOM
+should be generated before a tagged binary release.
 
 Project-owned source code and documentation are licensed under Apache-2.0.
 
@@ -11,8 +12,9 @@ Project-owned source code and documentation are licensed under Apache-2.0.
 | Qwen3-TTS MLX weights | Offline TTS model | Apache-2.0 | Download separately; do not bundle in `.xpi` |
 | Zotero | Host application and reader integration reference | AGPL-3.0 | Do not redistribute a modified app for the MVP |
 
-Before release, generate a dependency inventory from the locked environment and
-record the exact Hugging Face model repository and commit SHA used by default.
+Before a tagged binary release, generate a dependency inventory from the locked
+environment. The exact default Hugging Face repository and snapshot are recorded
+below.
 
 ## Currently validated model
 

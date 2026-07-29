@@ -14,8 +14,8 @@ is selected, the paper text and generated audio stay on your Mac.
 
 > [!IMPORTANT]
 > This is an early, tested prototype for Zotero 9.0.x on Apple Silicon. It uses
-> private Zotero APIs and currently requires the local bridge to be started
-> manually.
+> private Zotero APIs. The included macOS LaunchAgent keeps the local bridge
+> available after installation and across logins.
 
 ## Contents
 
@@ -45,7 +45,9 @@ is selected, the paper text and generated audio stay on your Mac.
 - Python 3.12 and [uv](https://docs.astral.sh/uv/).
 - Node.js 20 or newer for the plugin runtime-contract test.
 - About 3.1 GB of free space for the default model, plus the Python environment.
-- Internet access only for the initial dependency and model downloads.
+- Internet access for cloning, initial dependency/model downloads, and Zotero's
+  optional cloud voices or update checks. Qwen3-TTS local voices work offline
+  after setup.
 
 Intel Macs, Windows, Linux, Zotero 8, and Zotero 10 are not currently
 supported.
@@ -82,7 +84,7 @@ enabled, so it will fail closed rather than downloading a model unexpectedly.
 ```
 
 The command prints the path to an XPI such as
-`dist/zotero-local-tts-0.1.4.xpi`.
+`dist/zotero-local-tts-0.1.5.xpi`.
 
 ### 4. Install the plugin
 
@@ -94,20 +96,34 @@ In Zotero:
 4. Select the XPI from this repository's `dist/` directory.
 5. Confirm that **Zotero Local TTS** is enabled.
 
-### 5. Start the local bridge
+### 5. Install and start the local bridge
 
 ```bash
-HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 uv run --no-sync zotero-local-tts
+uv run --no-sync zotero-local-tts install-service
 ```
 
-Keep this terminal open while listening. On its first start, the bridge creates
-a random bearer token at:
+This installs a per-user macOS LaunchAgent, starts the bridge immediately, and
+restarts it after login or an unexpected exit. It always enables Hugging Face
+and Transformers offline modes. The terminal does not need to remain open.
+The LaunchAgent records the current `.venv` Python as an absolute path, so keep
+this checkout at the same location. Before moving the project, uninstall the
+service and reinstall it from the new location.
+
+On its first start, the bridge creates a random bearer token at:
 
 ```text
 ~/Library/Application Support/Zotero Local TTS/token
 ```
 
-The directory is restricted to mode `0700` and the token to `0600`.
+The directory is restricted to mode `0700` and the token to `0600`. Confirm the
+background service is loaded with:
+
+```bash
+uv run --no-sync zotero-local-tts service-status
+```
+
+For development, the foreground bridge remains available as
+`uv run --no-sync zotero-local-tts serve`.
 
 ### 6. Select a local voice in Zotero
 
@@ -123,8 +139,8 @@ under `Standard`, but it uses zero Zotero credits and sends synthesis requests
 only to `127.0.0.1`. The nine built-in speakers are restricted to their native
 language menus: Aiden/Ryan for English; Vivian/Serena/Uncle Fu/Dylan/Eric for
 Chinese; Ono Anna for Japanese; and Sohee for Korean. Zotero's existing
-Standard and Premium voices remain available; selecting one of them uses
-Zotero's original cloud behavior.
+Standard and Premium voices remain available when Zotero's voice metadata is
+reachable; selecting one of them uses Zotero's original cloud behavior.
 
 ## How it works
 
@@ -135,7 +151,7 @@ Zotero PDF Reader
        │ authenticated POST /v1/audio/speech
        ▼
 Local bridge on 127.0.0.1:8766
-  └─ validates host, origin, token, model, voice, size, and concurrency
+  └─ validates host, origin, token, model, voice, and size; serializes inference
        │
        ▼
 MLX-Audio + Qwen3-TTS CustomVoice 1.7B 8-bit
@@ -194,25 +210,31 @@ paper listening and sentence-gap tuning remain ongoing work.
 - It uses private Zotero APIs that may change without notice.
 - English academic papers remain the primary validated listening workflow; all
   nine built-in voices are available in their native-language menus.
-- The bridge must be started manually after login.
 - Zotero does not expose an extension point for third-party voices in its true
   `Local` tier, so Qwen3-TTS voices must appear in `Standard` on Zotero 9.0.x.
-- Failure messages are currently generic; inspect the bridge terminal first.
-- Voice cloning, streaming, academic-text cleanup, automatic startup, and cache
+- Zotero's inline failure text is limited to its built-in error categories; the
+  plugin displays a separate local diagnostic for bridge, token, or model errors.
+- Voice cloning, streaming, academic-text cleanup, and cache
   management are planned rather than complete.
 
 ## Troubleshooting
 
 ### Local voices do not appear
 
-- Confirm **Zotero Local TTS 0.1.4** is enabled under **Tools → Plugins**.
+- Confirm **Zotero Local TTS 0.1.5** is enabled under **Tools → Plugins**.
 - Restart Zotero after installing or updating the XPI; an already-open Reader
   can retain its previous voice list.
 - Choose **Voice Mode: Standard**, not Local.
 
-### Read Aloud shows a network or synthesis error
+### Read Aloud shows a local bridge or synthesis error
 
-- Confirm the bridge terminal is still running.
+- Confirm the background service is loaded:
+
+  ```bash
+  uv run --no-sync zotero-local-tts service-status
+  ```
+
+- Check `~/Library/Application Support/Zotero Local TTS/bridge-error.log`.
 - Check the authenticated health endpoint without printing the token:
 
   ```bash
@@ -235,12 +257,26 @@ lsof -nP -iTCP:8766 -sTCP:LISTEN
 
 ## Remove the prototype
 
-1. Pause Read Aloud and stop the bridge with `Control-C`.
+1. Pause Read Aloud and stop/remove the background service:
+
+   ```bash
+   uv run --no-sync zotero-local-tts uninstall-service
+   ```
+
 2. Open **Tools → Plugins** in Zotero.
 3. Disable or remove **Zotero Local TTS**.
 
+If the checkout or `.venv` was removed before running the uninstaller, use the
+macOS fallback and then remove the stale plist:
+
+```bash
+launchctl bootout "gui/$(id -u)/io.github.nightlighttw.zotero-local-tts"
+rm -f ~/Library/LaunchAgents/io.github.nightlighttw.zotero-local-tts.plist
+```
+
 The original Zotero Read Aloud methods are restored when the plugin shuts down.
-The downloaded model and local token remain on disk until removed manually.
+The downloaded model, local token, and bridge logs remain on disk until removed
+manually.
 
 ## Documentation
 
@@ -248,6 +284,7 @@ The downloaded model and local token remain on disk until removed manually.
 - [M5 model benchmark](docs/M0_RESULTS.md)
 - [Zotero native integration results](docs/M1_5_RESULTS.md)
 - [Nine-voice Zotero validation](docs/M2_RESULTS.md)
+- [Background service and offline error validation](docs/M3_RESULTS.md)
 - [Architecture decision: reuse native Read Aloud](docs/ADR-0001-zotero-read-aloud-integration.md)
 - [Third-party components and model revision](docs/THIRD_PARTY.md)
 
@@ -287,8 +324,6 @@ zotero-local-tts/
 
 ## Roadmap
 
-- macOS LaunchAgent or another supported automatic-start lifecycle.
-- User-visible bridge and synthesis diagnostics.
 - Long-paper gap, cache, highlighting, and saved-position validation.
 - Conservative, optional academic-text normalization.
 - Streaming evaluation if native WAV prefetch is insufficient.
