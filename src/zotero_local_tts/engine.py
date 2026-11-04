@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import os
+import re
 from typing import Any, Protocol
 
 import numpy as np
@@ -16,6 +17,26 @@ ACADEMIC_INSTRUCT = (
     "Calm, neutral academic narration. Maintain a steady pace, restrained pitch "
     "variation, consistent volume, and clear articulation."
 )
+
+# Qwen3-TTS reads URLs and DOIs as gibberish, so speak a placeholder instead.
+# Only RFC 3986 characters belong to a link, plus a DOI suffix that PDF line
+# wrapping split off ("https://doi.org/10.1145/ 3706598.3713582").
+LINK_RE = re.compile(
+    r"(?:https?://|www\.|doi\.org/|\b10\.\d{4,9}/)[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=%]*"
+    r"(?:(?<=/)\s+\d+\.\d+)?",
+    re.IGNORECASE,
+)
+TRAILING_PUNCTUATION = ".,;:!?)]'"
+
+
+def _link_placeholder(match: re.Match[str]) -> str:
+    link = match.group()
+    return "link" + link[len(link.rstrip(TRAILING_PUNCTUATION)) :]
+
+
+def speakable_text(text: str) -> str:
+    return LINK_RE.sub(_link_placeholder, text)
+
 
 GENERATION_PROFILES: dict[str, dict[str, Any]] = {
     DEFAULT_PROFILE: {},
@@ -103,6 +124,7 @@ class MLXAudioEngine:
                 "voice_language_unconfigured",
                 "The requested voice has no configured native language",
             )
+        text = speakable_text(text)
         generation_options = _generation_options(profile, text)
         chunks: list[np.ndarray] = []
         sample_rate = int(getattr(model, "sample_rate", 24_000))

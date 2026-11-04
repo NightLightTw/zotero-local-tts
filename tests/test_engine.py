@@ -8,7 +8,12 @@ import numpy as np
 import pytest
 
 from zotero_local_tts.config import ACADEMIC_PROFILE, DEFAULT_PROFILE
-from zotero_local_tts.engine import ACADEMIC_INSTRUCT, MLXAudioEngine, SynthesisError
+from zotero_local_tts.engine import (
+    ACADEMIC_INSTRUCT,
+    MLXAudioEngine,
+    SynthesisError,
+    speakable_text,
+)
 
 
 class RecordingModel:
@@ -96,3 +101,32 @@ def test_profiles_reject_generation_that_hits_safety_ceiling(profile: str) -> No
         )
 
     assert error.value.reason == "generation_limit_reached"
+
+
+def test_links_are_spoken_as_placeholder() -> None:
+    model = RecordingModel()
+
+    configured_engine(model).synthesize(
+        "See https://doi.org/10.1145/3706598.3713582 and 10.1000/xyz123.",
+        "test-model",
+        "Ryan",
+        1.0,
+        DEFAULT_PROFILE,
+    )
+
+    assert model.calls[0]["text"] == "See link and link."
+
+
+@pytest.mark.parametrize(
+    ("text", "spoken"),
+    [
+        ("See https://x.org/a—which is good.", "See link—which is good."),
+        ("見 https://x.org/a，以及", "見 link，以及"),
+        ('"https://x.org/a."', '"link."'),
+        ("(see www.example.com/a?b=1).", "(see link)."),
+        ("22 pages. https://doi.org/10.1145/ 3706598.3713582.", "22 pages. link."),
+        ("From 82.4 to 83.1 [10], e.g. file.py.", "From 82.4 to 83.1 [10], e.g. file.py."),
+    ],
+)
+def test_link_placeholder_keeps_surrounding_text(text: str, spoken: str) -> None:
+    assert speakable_text(text) == spoken
