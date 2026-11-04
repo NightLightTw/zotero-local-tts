@@ -3,7 +3,7 @@
 ## Supported versions
 
 Security fixes are currently provided only for the latest commit on `main`.
-The prototype is version-gated to Zotero 9.0.x.
+The prototype is version-gated to Zotero 9.0.x and 10.0.x.
 
 ## Reporting a vulnerability
 

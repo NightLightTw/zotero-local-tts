@@ -1,11 +1,11 @@
 # Zotero Local TTS
 
-Natural, private Read Aloud for Zotero 9 using Qwen3-TTS and MLX on Apple
+Natural, private Read Aloud for Zotero 9 and 10 using Qwen3-TTS and MLX on Apple
 Silicon.
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 [![Platform: Apple Silicon](https://img.shields.io/badge/Platform-Apple%20Silicon-black.svg)](#requirements)
-[![Zotero: 9.0.x](https://img.shields.io/badge/Zotero-9.0.x-cc2936.svg)](#compatibility-and-current-limitations)
+[![Zotero: 9.0.x–10.0.x](https://img.shields.io/badge/Zotero-9.0.x%E2%80%9310.0.x-cc2936.svg)](#compatibility-and-current-limitations)
 
 Zotero Local TTS connects Zotero's native PDF Read Aloud controls to a local
 Qwen3-TTS model. Zotero still handles sentence navigation, highlighting,
@@ -13,7 +13,7 @@ play/pause, playback speed, caching, and prefetch. When a Qwen3-TTS local voice
 is selected, the paper text and generated audio stay on your Mac.
 
 > [!IMPORTANT]
-> This is an early, tested prototype for Zotero 9.0.x on Apple Silicon. It uses
+> This is an early, tested prototype for Zotero 9.0.x and 10.0.x on Apple Silicon. It uses
 > private Zotero APIs. The included macOS LaunchAgent keeps the local bridge
 > available after installation and across logins.
 
@@ -41,7 +41,7 @@ is selected, the paper text and generated audio stay on your Mac.
 ## Requirements
 
 - An Apple Silicon Mac. The validated machine is an M5 with 24 GB memory.
-- macOS and Zotero 9.0.x. The validated Zotero version is 9.0.6.
+- macOS and Zotero 9.0.x or 10.0.x. The validated Zotero versions are 9.0.6 and 10.0.7.
 - Python 3.12 and [uv](https://docs.astral.sh/uv/).
 - Node.js 20 or newer for the plugin runtime-contract test.
 - About 3.1 GB of free space for the default model, plus the Python environment.
@@ -49,7 +49,7 @@ is selected, the paper text and generated audio stay on your Mac.
   optional cloud voices or update checks. Qwen3-TTS local voices work offline
   after setup.
 
-Intel Macs, Windows, Linux, Zotero 8, and Zotero 10 are not currently
+Intel Macs, Windows, Linux, Zotero 8, and Zotero 11 are not currently
 supported.
 
 ## Quick start
@@ -84,7 +84,7 @@ enabled, so it will fail closed rather than downloading a model unexpectedly.
 ```
 
 The command prints the path to an XPI such as
-`dist/zotero-local-tts-0.1.6.xpi`.
+`dist/zotero-local-tts-0.1.7.xpi`.
 
 ### 4. Install the plugin
 
@@ -210,12 +210,14 @@ paper listening and sentence-gap tuning remain ongoing work.
 
 ## Compatibility and current limitations
 
-- The plugin is version-gated to Zotero 9.0.x and tested on 9.0.6.
+- The plugin is version-gated to Zotero 9.0.x and 10.0.x and tested on 9.0.6 and 10.0.7.
 - It uses private Zotero APIs that may change without notice.
 - English academic papers remain the primary validated listening workflow; all
   nine built-in voices are available in their native-language menus.
+- Zotero 10 lists `Standard` voices only when you are signed in to a Zotero
+  account, so Qwen3-TTS voices do not appear while signed out.
 - Zotero does not expose an extension point for third-party voices in its true
-  `Local` tier, so Qwen3-TTS voices must appear in `Standard` on Zotero 9.0.x.
+  `Local` tier, so Qwen3-TTS voices must appear in `Standard`.
 - Zotero's inline failure text is limited to its built-in error categories; the
   plugin displays a separate local diagnostic for bridge, token, or model errors.
 - Ryan Academic retains Zotero's native sentence-by-sentence segmentation.
@@ -228,7 +230,7 @@ paper listening and sentence-gap tuning remain ongoing work.
 
 ### Local voices do not appear
 
-- Confirm **Zotero Local TTS 0.1.6** is enabled under **Tools → Plugins**.
+- Confirm **Zotero Local TTS 0.1.7** is enabled under **Tools → Plugins**.
 - Restart Zotero after installing or updating the XPI; an already-open Reader
   can retain its previous voice list.
 - Choose **Voice Mode: Standard**, not Local.

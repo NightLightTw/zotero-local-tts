@@ -29,8 +29,8 @@ const originalGetReadAloudVoices = async function () {
   }
   return {
     voices: {
-      standard: [{ voices: { cloud: { label: "Cloud Standard" } } }],
-      premium: [{ voices: { premium: { label: "Cloud Premium" } } }],
+      standard: [{ cacheVersion: 7, voices: { cloud: { label: "Cloud Standard" } } }],
+      premium: [{ cacheVersion: 7, voices: { premium: { label: "Cloud Premium" } } }],
     },
     standardCreditsRemaining: 100,
     premiumCreditsRemaining: 50,
@@ -63,10 +63,15 @@ const context = vm.createContext({
         return { response: "local-audio" };
       },
     },
+    Prefs: {
+      values: new Map(),
+      get(pref) { return this.values.get(pref); },
+      set(pref, value) { this.values.set(pref, value); },
+    },
     Sync: { APIClient },
     debug: () => {},
     initializationPromise: Promise.resolve(),
-    version: "9.0.6",
+    version: "10.0.7",
   },
 });
 
@@ -172,10 +177,15 @@ assert.match(
   /could not synthesize/
 );
 
+assert.equal(localConfiguration.cacheVersion, "zotero-local-tts-1");
+
 for (const mode of ["throw", "error"]) {
   voiceResponseMode = mode;
   const fallback = await client.getReadAloudVoices();
-  assert.equal(fallback.voices.standard.length, 1);
+  // The cloud cacheVersion seen online keeps Zotero from pruning cloud audio offline.
+  assert.equal(fallback.voices.standard.length, 2);
+  assert.equal(fallback.voices.standard[1].cacheVersion, "7");
+  assert.deepEqual({ ...fallback.voices.standard[1].locales }, {});
   assert.equal(
     fallback.voices.standard[0].voices["zotero-local-qwen-aiden"].label,
     "Aiden (Qwen3-TTS, Local)"

@@ -1,7 +1,7 @@
 [project]
 name = "zotero-local-tts"
-version = "0.1.6"
-description = "Local Qwen3-TTS service and Zotero 9 integration"
+version = "0.1.7"
+description = "Local Qwen3-TTS service and Zotero 9–10 integration"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 license = "Apache-2.0"

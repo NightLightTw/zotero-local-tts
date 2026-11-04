@@ -3,9 +3,12 @@
 "use strict";
 
 const PLUGIN_NAME = "Zotero Local TTS";
-const SUPPORTED_VERSION = /^9\.0\./;
+const SUPPORTED_VERSION = /^(9|10)\.0\./;
 const BRIDGE_URL = "http://127.0.0.1:8766";
 const MODEL = "qwen3-customvoice-1.7b-8bit";
+// Bump when bridge output changes so Zotero drops stale cached local audio.
+const LOCAL_CACHE_VERSION = "zotero-local-tts-1";
+const CLOUD_CACHE_VERSIONS_PREF = "extensions.zotero-local-tts.cloudCacheVersions";
 const LOCAL_VOICES = {
   "zotero-local-qwen-aiden": {
     engineVoice: "Aiden",
@@ -128,6 +131,7 @@ function localVoiceResponse() {
     voices: {
       standard: [
         {
+          cacheVersion: LOCAL_CACHE_VERSION,
           creditsPerMinute: 0,
           segmentGranularity: "sentence",
           sentenceDelay: 0,
@@ -167,13 +171,37 @@ function localVoiceResponse() {
   };
 }
 
+// Zotero 10 deletes cached audio whose cacheVersion is absent from the voice
+// list, so an offline fallback must still list the cloud versions seen last.
+function rememberCloudCacheVersions(voices) {
+  const versions = Object.values(voices).flatMap((configs) =>
+    Array.isArray(configs) ? configs.map((config) => String(config.cacheVersion)) : []
+  );
+  Zotero.Prefs.set(CLOUD_CACHE_VERSIONS_PREF, JSON.stringify([...new Set(versions)]), true);
+}
+
+// shortcut: if cloud voices were never listed while online, nothing protects
+// their cache; upgrade if Zotero exposes a way to skip pruning.
+function withKnownCloudCacheVersions(local) {
+  let versions = [];
+  try {
+    versions = JSON.parse(Zotero.Prefs.get(CLOUD_CACHE_VERSIONS_PREF, true) || "[]");
+  } catch (error) {
+    log(`stored cloud cache versions are unreadable (${error?.name || "Error"})`);
+  }
+  // A config without locales adds no voices but keeps its cached audio.
+  local.voices.standard.push(...versions.map((cacheVersion) => ({ cacheVersion, locales: {} })));
+  return local;
+}
+
 async function mergedVoiceResponse(apiClient) {
   const local = localVoiceResponse();
   try {
     const original = await originalGetReadAloudVoices.call(apiClient);
     if (original?.error || !original?.voices) {
-      return local;
+      return withKnownCloudCacheVersions(local);
     }
+    rememberCloudCacheVersions(original.voices);
     const originalStandard = Array.isArray(original.voices.standard)
       ? original.voices.standard
       : [];
@@ -186,7 +214,7 @@ async function mergedVoiceResponse(apiClient) {
     };
   } catch (error) {
     log(`original voice listing failed (${error?.name || "Error"})`);
-    return local;
+    return withKnownCloudCacheVersions(local);
   }
 }
 
@@ -239,7 +267,7 @@ async function requestAudio(segment, voiceID) {
   } catch (error) {
     // Never log the request text or bearer token.
     reportLocalFailure(error);
-    // Zotero 9 only defines network, quota, and unknown Read Aloud errors.
+    // Zotero's other Read Aloud errors blame the network or credits.
     // "unknown" avoids falsely instructing an offline user to check the internet.
     return { error: "unknown" };
   }
